@@ -21,7 +21,6 @@ while [ ! -z "$*" ];do
   esac
 done
 FILEEXTENSION="$(echo $FILENAME | sed -e 's/^[^\.]*\.//'| tr 'A-Z' 'a-z')"
-echo "${FILEEXTENSTION}"
 case "${FILEEXTENSION}" in
   "cbr"|"rar")
     (cd /var/cache/git/bookreader; unrar x "${FILENAME}")
