@@ -61,11 +61,11 @@ case "${FILEEXTENSION}" in
     (
       PAGES=$(pdfinfo "${FILENAME}" | egrep "(Pages):" | awk '{print $NF}')
       COUNTER=-1
-      for page in $(seq 0 ${PAGES}); do  
+      for page in $(seq 0 ${PAGES}); do
         COUNTER=`expr ${COUNTER} + 1`
         # -density 200 will result in 1275 x 1650
-         echo -n "            {\"width\": 1275, \"height\": 1650, \"uri\": \"${page}\"}"
-         [ ${COUNTER} -eq ${PAGES} ] && echo "" || echo ","  
+         echo -n "            {\"width\": 1275, \"height\": 1650, \"uri\": \"${page}.png\"}"
+         [ ${COUNTER} -eq ${PAGES} ] && echo "" || echo ","
         # convert-im6 -density 200 "${FILENAME}[${page}]" png:- | | convert - -print "\"width\": %w, \"height\": %h,\n" /dev/null
       done
     )

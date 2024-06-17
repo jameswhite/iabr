@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+HERE="$(cd $(dirname ${BASH_SOURCE[0]})/.. ; pwd)"
+[ -d ${HERE}/tmp ] && TEMP="${HERE}/tmp" || TEMP="/tmp"
+TEMPDIR=$(mktemp -d ${TEMP}/$(basename ${BASH_SOURCE[0]}).XXXX)
+
+cleanup() {
+  [ -d "${TEMPDIR}" ] && rm -rf "${TEMPDIR}"
+}
+trap cleanup EXIT
+
+while [ ! -z "$*" ];do
+  case "$1" in
+     "--file")
+       FILENAME="$2"
+       shift 2
+     ;;
+     *)
+       echo "Unknown Option $1"
+       shift 1
+     ;;
+  esac
+done
+FILEEXTENSION="$(echo $FILENAME | sed -e 's/^[^\.]*\.//'| tr 'A-Z' 'a-z')"
+case "${FILEEXTENSION}" in
+  "cbr"|"rar")
+    (cd /var/cache/git/bookreader; unrar x "${FILENAME}")
+   ;;
+  "cbz"|"zip")
+    (cd /var/cache/git/bookreader; unzip -j "${FILENAME}")
+   ;;
+  "pdf")
+    (cd /var/cache/git/bookreader; unzip -j "${FILENAME}")
+    convert-im6 -density 200 "${FILENAME} %d.png
+   ;;
+esac
+

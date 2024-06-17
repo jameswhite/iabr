@@ -52,7 +52,7 @@ RUN rm /etc/apt/sources.list.d/debian.sources \
         https://upload.wikimedia.org/wikipedia/commons/e/ed/Pix.gif         \
     ) || true \\
   && wget --no-check-certificate -qO "/var/cache/git/bookreader/${DECODED_FILE_BASE}" "${FILE_URI}" \
-  && (cd var/cache/git/bookreader; unrar x "${DECODED_FILE_BASE}") \
+  && (cd var/cache/git/bookreader; /user/local/bin/unpacker --file "${DECODED_FILE_BASE}") \
   && /usr/local/bin/indexer --file "/var/cache/git/bookreader/${DECODED_FILE_BASE}" > /var/cache/git/bookreader/laboratory.json || true
 COPY bookreader /var/cache/git/bookreader
 CMD ["bash"]
