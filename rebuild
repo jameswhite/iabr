@@ -45,32 +45,31 @@ FROM scratch
 ADD rootfs.tar.xz /
 ADD sources.list /etc/apt/sources.list
 COPY bin /usr/local/bin
-RUN rm /etc/apt/sources.list.d/debian.sources \
- && apt-get update && apt-get install -y apt-file file imagemagick git net-tools nodejs node-jquery node-jquery-ui npm poppler-utils procps unzip vim wget \
- && apt-file update \
- && apt-get -y build-dep unrar-nonfree     \
- && (cd /var/tmp; apt-get source -b unrar-nonfree) \
- && (cd /var/tmp; dpkg -i unrar*.deb)              \
+RUN rm /etc/apt/sources.list.d/debian.sources                               \
+ && apt-get update                                                          \
+ && apt-get install -y apt-file file imagemagick git net-tools nodejs node-jquery node-jquery-ui npm poppler-utils procps unzip vim wget \
+ && apt-file update                                                         \
+ && apt-get -y build-dep unrar-nonfree                                      \
+ && (cd /var/tmp; apt-get source -b unrar-nonfree)                          \
+ && (cd /var/tmp; dpkg -i unrar*.deb)                                       \
  && mkdir -p /var/cache/git                                                 \
  && (cd /var/cache/git; git clone https://github.com/jameswhite/bookreader) \
  && (cd /var/cache/git/bookreader; git checkout -b laboratory)              \
  && (                                                                       \
       cd /var/cache/git/bookreader                                          \
       yes 'y' | npx update-browserslist-db@latest                           \
-      npm run build --yes                                                   \
-      wget -O /var/cache/git/bookreader/BookReader/images/loading.gif       \
-        https://upload.wikimedia.org/wikipedia/commons/e/ed/Pix.gif         \
-    ) \
-  && wget --no-check-certificate -qO "/var/cache/git/bookreader/${DECODED_FILE_BASE}" "${FILE_URI}" \
-  && (cd /var/cache/git/bookreader; /usr/local/bin/unpacker --file "${DECODED_FILE_BASE}") \
-  && /usr/local/bin/indexer --file "/var/cache/git/bookreader/${DECODED_FILE_BASE}" > /var/cache/git/bookreader/laboratory.json || true
+      npm run build --yes || true                                           \
+    )                                                                       \
+ && wget --no-check-certificate -qO "/var/cache/git/bookreader/${DECODED_FILE_BASE}" "${FILE_URI}" \
+ && (cd /var/cache/git/bookreader; /usr/local/bin/unpacker --file "${DECODED_FILE_BASE}") \
+ && /usr/local/bin/indexer --file "/var/cache/git/bookreader/${DECODED_FILE_BASE}" > /var/cache/git/bookreader/laboratory.json || true
 ADD policy.xml /etc/ImageMagick-6/policy.xml
 COPY bookreader /var/cache/git/bookreader
 CMD ["bash"]
 # CMD ["(cd /var/cache/git/bookreader; npm run serve -y)"]
 EXPOSE 8000
 EOF
-# docker run -i -p8000:8000 --expose=8000 -t iabr /bin/bash -c "(cd /var/cache/git/bookreader; npm run serve -y)"
+docker run -i -p8000:8000 --expose=8000 -t iabr /bin/bash -c "(cd /var/cache/git/bookreader; npm run serve -y)"
+#docker run -i -p8000:8000 --expose=8000 -t iabr /bin/bash
 
-docker run -i -p8000:8000 --expose=8000 -t iabr /bin/bash
-# docker exec -it "$(docker ps | grep iabr | awk '{print $1}')" /bin/bash
+#  docker exec -it "$(docker ps | grep iabr | awk '{print $1}')" /bin/bash
