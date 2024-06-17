@@ -1,4 +1,13 @@
 #!/usr/bin/env bash
+
+urldecode() {
+    # urldecode <string>
+
+    local url_encoded="${1//+/ }"
+    printf '%b' "${url_encoded//%/\\x}"
+}
+export -f urldecode
+
 HERE="$(cd $(dirname ${BASH_SOURCE[0]})/.. ; pwd)"
 [ -d ${HERE}/tmp ] && TEMP="${HERE}/tmp" || TEMP="/tmp"
 TEMPDIR=$(mktemp -d ${TEMP}/$(basename ${BASH_SOURCE[0]}).XXXX)
@@ -38,6 +47,7 @@ ADD sources.list /etc/apt/sources.list
 COPY bin /usr/local/bin
 RUN rm /etc/apt/sources.list.d/debian.sources \
  && apt-get update && apt-get install -y apt-file file imagemagick git net-tools nodejs node-jquery node-jquery-ui npm poppler-utils procps unzip vim wget \
+ && apt-file update \
  && apt-get -y build-dep unrar-nonfree     \
  && (cd /var/tmp; apt-get source -b unrar-nonfree) \
  && (cd /var/tmp; dpkg -i unrar*.deb)              \
