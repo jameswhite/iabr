@@ -60,6 +60,7 @@ case "${FILEEXTENSION}" in
   "pdf")
     (
       PAGES=$(pdfinfo "${FILENAME}" | egrep "(Pages):" | awk '{print $NF}')
+      PAGES=`expr ${PAGES} - 1`
       COUNTER=-1
       for page in $(seq 0 ${PAGES}); do
         COUNTER=`expr ${COUNTER} + 1`

@@ -60,7 +60,7 @@ RUN rm /etc/apt/sources.list.d/debian.sources \
       npm run build --yes                                                   \
       wget -O /var/cache/git/bookreader/BookReader/images/loading.gif       \
         https://upload.wikimedia.org/wikipedia/commons/e/ed/Pix.gif         \
-    ) || true \
+    ) \
   && wget --no-check-certificate -qO "/var/cache/git/bookreader/${DECODED_FILE_BASE}" "${FILE_URI}" \
   && (cd /var/cache/git/bookreader; /usr/local/bin/unpacker --file "${DECODED_FILE_BASE}") \
   && /usr/local/bin/indexer --file "/var/cache/git/bookreader/${DECODED_FILE_BASE}" > /var/cache/git/bookreader/laboratory.json || true
