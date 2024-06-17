@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+HERE="$(cd $(dirname ${BASH_SOURCE[0]})/.. ; pwd)"
+[ -d ${HERE}/tmp ] && TEMP="${HERE}/tmp" || TEMP="/tmp"
+TEMPDIR=$(mktemp -d ${TEMP}/$(basename ${BASH_SOURCE[0]}).XXXX)
+
+cleanup() {
+  [ -d "${TEMPDIR}" ] && rm -rf "${TEMPDIR}"
+}
+trap cleanup EXIT
+
+while [ ! -z "$*" ];do
+  case "$1" in
+     '--file')
+       FILENAME=$2
+       shift 2
+     ;;
+     '--path')
+       RELATIVEPATH=$2
+       shift 2
+     ;;
+     *)
+       echo "Unknown Option $1"
+       shift 1
+     ;;
+  esac
+done
+FILESIGNORE="\.([Cc][Ss][Vv]|[Ss][Ff][Vv]|[Tt][Xx][Tt])$"
+FILEEXTENSION="$(echo $FILENAME | sed -e 's/^[^\.]*\.//'| tr 'A-Z' 'a-z')"
+echo -e "{\n "\"ppi\"": 200,\n "\"data\"": [\n           ["
+case "${FILEEXTENSION}" in
+  "cbr"|"rar")
+    (
+      PAGES="$(unrar l "${FILENAME}"  | sed -e '1,/-----------/ d' | sed '/-----------/ Q' | egrep -v "${FILESIGNORE}" | awk '{print $NF}' | wc -l)"
+      COUNTER=0
+      for file in $(unrar l "${FILENAME}"  | sed -e '1,/-----------/ d' | sed '/-----------/ Q' | egrep -v "${FILESIGNORE}" | awk '{print $NF}'); do
+        COUNTER=`expr ${COUNTER} + 1`
+        GEOMETRY="$(unrar p -inul "${FILENAME}" "$file" | convert - -print "\"width\": %w, \"height\": %h,\n" /dev/null)"
+        echo -n "             {${GEOMETRY} \"uri\": \"$file\"}"
+        [ ${COUNTER} -eq ${PAGES} ] && echo "" || echo ","  
+      done
+    )
+  ;;
+  "cbz"|"zip")
+    (
+      PAGES="$(unzip -jl "${FILENAME}" | sed -e '1,/---------/ d' | sed '/---------/ Q' | egrep -v "${FILESIGNORE}" | awk '{print $NF}' | wc -l)"
+      COUNTER=0
+      unzip -l "${FILENAME}" | sed -e '1,/---------/ d' | sed '/---------/ Q' | egrep -v "${FILESIGNORE}" | cut -b 31- | while read file; do
+        basefile=$(echo "${file}" | sed 's/.*\///')
+        COUNTER=`expr ${COUNTER} + 1`
+        echo "${file}" | tr 'A-Z' 'a-z' | sed -e 's/^[^\.]*\.//' | egrep "(jpg|gif|png)" > /dev/null
+        EXIT=$?
+        if [ $EXIT -eq 0 ]; then
+          GEOMETRY="$(unzip -jp "${FILENAME}" "${file}" | convert - -print "\"width\": %w, \"height\": %h,\n" /dev/null)"
+          echo -n "           {${GEOMETRY} \"uri\": \"$basefile\"}"
+          [ ${COUNTER} -eq ${PAGES} ] && echo "" || echo ","  
+        fi
+      done
+    )
+  ;;
+  "pdf")
+    (
+      PAGES=$(pdfinfo "${FILENAME}" | egrep "(Pages):" | awk '{print $NF}')
+      COUNTER=-1
+      for page in $(seq 0 ${PAGES}); do  
+        COUNTER=`expr ${COUNTER} + 1`
+        # -density 200 will result in 1275 x 1650
+         echo -n "            {\"width\": 1275, \"height\": 1650, \"uri\": \"${page}\"}"
+         [ ${COUNTER} -eq ${PAGES} ] && echo "" || echo ","  
+        # convert-im6 -density 200 "${FILENAME}[${page}]" png:- | | convert - -print "\"width\": %w, \"height\": %h,\n" /dev/null
+      done
+    )
+  ;;
+esac
+echo -e "           ]\n        ],\n  "\"bookTitle\"": "\"$(basename "${FILENAME}")\"",\n  "\"bookUrl\"": "\"../BookReaderDemo/${RELATIVEPATH}\"",\n  "\"ui\"": "\"full\"",\n  "\"el\"": "\"#BookReader\""\n }"
