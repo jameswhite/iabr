@@ -44,6 +44,7 @@ cat << EOF | docker build --no-cache --progress=plain -t iabr -f - "${HERE}"
 FROM scratch
 ADD rootfs.tar.xz /
 ADD sources.list /etc/apt/sources.list
+ADD policy.xml /etc/ImageMagick-6-policy.xml
 COPY bin /usr/local/bin
 RUN rm /etc/apt/sources.list.d/debian.sources                               \
  && apt-get update                                                          \
@@ -60,10 +61,10 @@ RUN rm /etc/apt/sources.list.d/debian.sources                               \
       yes 'y' | npx update-browserslist-db@latest                           \
       npm run build --yes || true                                           \
     )                                                                       \
+ && cp /etc/ImageMagick-6-policy.xml /etc/ImageMagick-6-policy.xml           \
  && wget --no-check-certificate -qO "/var/cache/git/bookreader/${DECODED_FILE_BASE}" "${FILE_URI}" \
  && (cd /var/cache/git/bookreader; /usr/local/bin/unpacker --file "${DECODED_FILE_BASE}") \
  && /usr/local/bin/indexer --file "/var/cache/git/bookreader/${DECODED_FILE_BASE}" > /var/cache/git/bookreader/laboratory.json || true
-ADD policy.xml /etc/ImageMagick-6/policy.xml
 COPY bookreader /var/cache/git/bookreader
 CMD ["bash"]
 # CMD ["(cd /var/cache/git/bookreader; npm run serve -y)"]
