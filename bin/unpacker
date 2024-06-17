@@ -30,7 +30,7 @@ case "${FILEEXTENSION}" in
    ;;
   "pdf")
     (
-      cd /var/cache/git/bookreader; convert-im6 -density 200 "${FILENAME}" %d.png)
+      cd /var/cache/git/bookreader
       PAGES=$(pdfinfo "${FILENAME}" | egrep "(Pages):" | awk '{print $NF}')
       PAGES=`expr ${PAGES} - 1`
       for page in $(seq 0 ${PAGES}); do convert-im6 -density 200 -colorspace RGB "${FILENAME}[${page}]" ${page}.png; done
