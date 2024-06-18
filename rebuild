@@ -36,7 +36,7 @@ docker image list | grep iabr | awk '{print $3}' | grep -v IMAGE | xargs docker 
 
 # Get our root filesystem:
 HERE="$(cd $(dirname ${BASH_SOURCE[0]}); pwd)"
-[ -f ${HERE}/rootfs.tar.xz ] || wget -O "${HERE}/rootfs.tar.xz" "https://github.com/debuerreotype/docker-debian-artifacts/raw/8d227a7d1f698c702d82e7de764ed0a7df65fb7c/bookworm/slim/rootfs.tar.xz"
+[ -f ${HERE}/rootfs.tar.xz ] || wget -O "${HERE}/rootfs.tar.xz" "https://github.com/debuerreotype/docker-debian-artifacts/raw/8d227a7d1f698c702d82e7de764ed0a7df65fb7c/bookworm/rootfs.tar.xz"
 
 # ensure COPY will work from script dir
 cd ${HERE}
@@ -61,10 +61,8 @@ RUN rm /etc/apt/sources.list.d/debian.sources                               \
       yes 'y' | npx update-browserslist-db@latest                           \
       npm run build --yes || true                                           \
     )                                                                       \
- && cp /etc/ImageMagick-6-policy.xml /etc/ImageMagick-6-policy.xml           \
- && wget --no-check-certificate -qO "/var/cache/git/bookreader/${DECODED_FILE_BASE}" "${FILE_URI}" \
- && (cd /var/cache/git/bookreader; /usr/local/bin/unpacker --file "${DECODED_FILE_BASE}") \
- && /usr/local/bin/indexer --file "/var/cache/git/bookreader/${DECODED_FILE_BASE}" > /var/cache/git/bookreader/laboratory.json || true
+ && cp /etc/ImageMagick-6-policy.xml /etc/ImageMagick-6/policy.xml || true  \
+ && /usr/local/bin/book --file "${FILE_URI}" || true
 COPY bookreader /var/cache/git/bookreader
 CMD ["bash"]
 # CMD ["(cd /var/cache/git/bookreader; npm run serve -y)"]
