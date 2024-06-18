@@ -6,7 +6,7 @@ Convert comic books (.cbr), zipped comics (.cbz), or portable document formatted
     - laboratory.js has had the inline book index removed and instead imports `laboratory.json` to describe the book.
 
 
-  - Scripts in [`bin/`](/jameswhite/iabr/tree/main/bin)
+  - Scripts in [`bin/`](/bin)
 
   - book
     - will download, unpack, and index a file from a uri
