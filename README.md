@@ -2,9 +2,9 @@ Convert comic books (.cbr), zipped comics (.cbz), or portable document formatted
 
 
   - Modifications to bookreader:
-    - index.html has been replaced with a simplified BookReaderDemo that calls `laboratory.js`.
-    - laboratory.js has had the inline book index removed and instead imports `laboratory.json` to describe the book.
-
+    - [`index.html`](/bookreader/index.html) has been replaced with a simplified BookReaderDemo that calls `laboratory.js`.
+    - [`laboratory.js`](/bookreader/laboratory.js) has had the inline book index removed and instead imports `laboratory.json` to describe the book.
+    - I also replaced the loading spinner with a 1x1 pixel gif, because sometimes it'd just never stop "loading", which I found annoying.
 
   - Scripts in [`bin/`](/bin)
 
