@@ -62,7 +62,7 @@ RUN rm /etc/apt/sources.list.d/debian.sources                               \
       npm run build --yes || true                                           \
     )                                                                       \
  && cp /etc/ImageMagick-6-policy.xml /etc/ImageMagick-6/policy.xml || true  \
- && /usr/local/bin/book --file "${FILE_URI}" || true
+ && /usr/local/bin/book --uri "${FILE_URI}" || true
 COPY bookreader /var/cache/git/bookreader
 CMD ["bash"]
 # CMD ["(cd /var/cache/git/bookreader; npm run serve -y)"]
