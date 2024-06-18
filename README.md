@@ -10,16 +10,17 @@ Convert comic books (.cbr), zipped comics (.cbz), or portable document formatted
 
   - [`book`](/bin/book)
     - will download, unpack, and index a file from a uri
+    - `Usage: ./book --uri https://raw.githubusercontent.com/jameswhite/iabr/main/doc/Life_Cycle_of_a_Silver_Bullet.pdf`
 
   - [`indexer`](/bin/indexer)
     - will create the index `laboratory.json` consumed by the javascript
+    - `Usage: ./indexer --file <filename>.pdf`
 
   - [`unpacker`](/bin/unpacker)
     - will unpack the files into images the bookreader can display in the root directory of the bookreader repository
+    - `Usage: ./unpacker --file <filename>.pdf`
 
 
   - The [`rebuild`](/rebuild) script
     - creates a docker container, downloads the bookreader repository, and calls scripts to download, unpack, and index, the book
-```
-Usage: ./rebuild --uri `https://raw.githubusercontent.com/jameswhite/iabr/main/doc/Life_Cycle_of_a_Silver_Bullet.pdf`
-```
+    - ` Usage: ./rebuild --uri https://raw.githubusercontent.com/jameswhite/iabr/main/doc/Life_Cycle_of_a_Silver_Bullet.pdf`
