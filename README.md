@@ -24,3 +24,4 @@ Convert comic books (.cbr), zipped comics (.cbz), or portable document formatted
   - The [`rebuild`](/rebuild) script
     - creates a docker container, downloads the bookreader repository, and calls scripts to download, unpack, and index, the book
     - ` Usage: ./rebuild --uri https://raw.githubusercontent.com/jameswhite/iabr/main/doc/Life_Cycle_of_a_Silver_Bullet.pdf`
+    - This will start a [docker container listening on port 8000](https://127.0.0.1:8000)
