@@ -54,7 +54,7 @@ RUN rm /etc/apt/sources.list.d/debian.sources                               \
  && (cd /var/tmp; apt-get source -b unrar-nonfree)                          \
  && (cd /var/tmp; dpkg -i unrar*.deb)                                       \
  && mkdir -p /var/cache/git                                                 \
- && (cd /var/cache/git; git clone https://github.com/jameswhite/bookreader) \
+ && (cd /var/cache/git; git clone https://github.com/internetarchive/bookreader) \
  && (cd /var/cache/git/bookreader; git checkout -b laboratory)              \
  && (                                                                       \
       cd /var/cache/git/bookreader                                          \
