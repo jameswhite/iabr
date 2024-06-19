@@ -36,7 +36,8 @@ docker image list | grep iabr | awk '{print $3}' | grep -v IMAGE | xargs docker 
 
 # Get our root filesystem:
 HERE="$(cd $(dirname ${BASH_SOURCE[0]}); pwd)"
-[ -f ${HERE}/rootfs.tar.xz ] || wget -O "${HERE}/rootfs.tar.xz" "https://github.com/debuerreotype/docker-debian-artifacts/raw/8d227a7d1f698c702d82e7de764ed0a7df65fb7c/bookworm/rootfs.tar.xz"
+# Get our root filesystem if we don't have one):
+[ -f ${HERE}/rootfs.tar.xz ] || curl "https://raw.githubusercontent.com/jameswhite/rootfs/main/$(curl https://raw.githubusercontent.com/jameswhite/rootfs/main/rootfs.tar.xz)" > rootfs.tar.xz
 
 # ensure COPY will work from script dir
 cd ${HERE}
@@ -61,6 +62,7 @@ RUN [ -f /etc/apt/sources.list.d/debian.sources ] && rm /etc/apt/sources.list.d/
       yes 'y' | npx update-browserslist-db@latest                           \
       npm run build --yes || true                                           \
     )                                                                       \
+ && cp /var/cache/git/bookreader/index.html /var/cache/git/bookreader/demo.html \
  && cp /etc/ImageMagick-6-policy.xml /etc/ImageMagick-6/policy.xml || true  \
  && /usr/local/bin/book --uri "${FILE_URI}" || true
 COPY bookreader /var/cache/git/bookreader

@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+urldecode() {
+    # urldecode <string>
+
+    local url_encoded="${1//+/ }"
+    printf '%b' "${url_encoded//%/\\x}"
+}
+export -f urldecode
+
+HERE="$(cd $(dirname ${BASH_SOURCE[0]})/.. ; pwd)"
+[ -d ${HERE}/tmp ] && TEMP="${HERE}/tmp" || TEMP="/tmp"
+TEMPDIR=$(mktemp -d ${TEMP}/$(basename ${BASH_SOURCE[0]}).XXXX)
+
+cleanup() {
+  [ -d "${TEMPDIR}" ] && rm -rf "${TEMPDIR}"
+}
+trap cleanup EXIT
+
+while [ ! -z "$*" ];do
+  case "$1" in
+     "--uri"|"--url")
+     FILE_URI="$2"
+     shift 2;
+     ;;
+     *)
+       echo "Unknown Option $1"
+       shift 1
+     ;;
+  esac
+done
+FILE_BASE="$(echo "${FILE_URI}" | sed 's/.*\///' )"
+DECODED_FILE_BASE="$(urldecode "${FILE_BASE}")"
+FILE_ROOT="$(echo "${DECODED_FILE_BASE}" | sed -e 's/\.[^\.]*$//')"
+[ ! -d  "/var/cache/git/bookreader/${FILE_ROOT}" ] && mkdir -p "/var/cache/git/bookreader/${FILE_ROOT}"
+wget --no-check-certificate -O "/var/cache/git/bookreader/${FILE_ROOT}/${DECODED_FILE_BASE}" "${FILE_URI}"
+(cd /var/cache/git/bookreader/${FILE_ROOT}; /usr/local/bin/unpacker --file "${DECODED_FILE_BASE}")
+/usr/local/bin/indexer --file "/var/cache/git/bookreader/${FILE_ROOT}/${DECODED_FILE_BASE}" > /var/cache/git/bookreader/index.json
