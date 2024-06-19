@@ -75,4 +75,4 @@ case "${FILEEXTENSION}" in
     )
   ;;
 esac
-echo -e "           ]\n        ],\n  "\"bookTitle\"": "\"$(basename "${FILENAME}")\"",\n  "\"bookUrl\"": "\"../BookReaderDemo/${RELATIVEPATH}\"",\n  "\"ui\"": "\"full\"",\n  "\"el\"": "\"#BookReader\""\n }"
+echo -e "           ]\n        ],\n  "\"bookTitle\"": "\"BookShelf\"",\n  "\"bookUrl\"": "\"./\"",\n  "\"ui\"": "\"full\"",\n  "\"el\"": "\"#BookReader\""\n }"
