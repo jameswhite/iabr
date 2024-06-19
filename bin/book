@@ -30,6 +30,8 @@ while [ ! -z "$*" ];do
 done
 FILE_BASE="$(echo "${FILE_URI}" | sed 's/.*\///' )"
 DECODED_FILE_BASE="$(urldecode "${FILE_BASE}")"
-wget --no-check-certificate -qO "/var/cache/git/bookreader/${DECODED_FILE_BASE}" "${FILE_URI}"
-(cd /var/cache/git/bookreader; /usr/local/bin/unpacker --file "${DECODED_FILE_BASE}")
-/usr/local/bin/indexer --file "/var/cache/git/bookreader/${DECODED_FILE_BASE}" > /var/cache/git/bookreader/laboratory.json
+FILE_ROOT="$(echo "${DECODED_FILE_BASE}" | sed -e 's/\.[^\.]*$//')"
+[ ! -d  "/var/cache/git/bookreader/${FILE_ROOT}" ] && mkdir -p "/var/cache/git/bookreader/${FILE_ROOT}"
+wget --no-check-certificate -O "/var/cache/git/bookreader/${FILE_ROOT}/${DECODED_FILE_BASE}" "${FILE_URI}"
+(cd /var/cache/git/bookreader/${FILE_ROOT}; /usr/local/bin/unpacker --file "${DECODED_FILE_BASE}")
+/usr/local/bin/indexer --file "/var/cache/git/bookreader/${FILE_ROOT}/${DECODED_FILE_BASE}" > /var/cache/git/bookreader/${FILE_ROOT}/index.json

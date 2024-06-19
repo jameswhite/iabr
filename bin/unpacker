@@ -20,17 +20,18 @@ while [ ! -z "$*" ];do
      ;;
   esac
 done
+DIRNAME="$(dirname ${FILENAME})"
 FILEEXTENSION="$(echo $FILENAME | sed -e 's/^[^\.]*\.//'| tr 'A-Z' 'a-z')"
 case "${FILEEXTENSION}" in
   "cbr"|"rar")
-    (cd /var/cache/git/bookreader; unrar x "${FILENAME}")
+    (cd "${DIRNAME}"; unrar x "${FILENAME}")
    ;;
   "cbz"|"zip")
-    (cd /var/cache/git/bookreader; unzip -j "${FILENAME}")
+    (cd "${DIRNAME}"; unzip -j "${FILENAME}")
    ;;
   "pdf")
     (
-      cd /var/cache/git/bookreader
+      cd "${DIRNAME}"
       PAGES=$(pdfinfo "${FILENAME}" | egrep "(Pages):" | awk '{print $NF}')
       PAGES=`expr ${PAGES} - 1`
       for page in $(seq 0 ${PAGES}); do convert-im6 -density 200 -colorspace RGB "${FILENAME}[${page}]" ${page}.png; done
