@@ -74,7 +74,7 @@ case "${FILEEXTENSION}" in
         echo "${file}" | tr 'A-Z' 'a-z' | sed -e 's/^[^\.]*\.//' | egrep "(jpg|gif|png)" > /dev/null
         EXIT=$?
         if [ $EXIT -eq 0 ]; then
-          GEOMETRY="$(unzip -p "${FILENAME}" "$(printf "%q" "${file}}")" | convert - -print "\"width\": %w, \"height\": %h,\n" /dev/null)"
+          GEOMETRY="$(unzip -p "${FILENAME}" "$(printf "%q" "${file}")" | convert - -print "\"width\": %w, \"height\": %h,\n" /dev/null)"
           echo -n "           {${GEOMETRY} \"uri\": \"$(urlencode "$basefile")\"}"
           [ ${COUNTER} -eq ${PAGES} ] && echo "" || echo ","  
         fi
