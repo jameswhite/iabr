@@ -48,7 +48,7 @@ ADD policy.xml /etc/ImageMagick-6-policy.xml
 COPY bin /usr/local/bin
 RUN [ -f /etc/apt/sources.list.d/debian.sources ] && rm /etc/apt/sources.list.d/debian.sources || true    \
  && apt-get update                                                          \
- && apt-get install -y apt-file file imagemagick git net-tools nodejs node-jquery node-jquery-ui npm poppler-utils procps unzip vim wget \
+ && apt-get install -y apt-file file imagemagick ghostscript git net-tools nodejs node-jquery node-jquery-ui npm poppler-utils procps unzip vim wget \
  && apt-file update                                                         \
  && apt-get -y build-dep unrar-nonfree                                      \
  && (cd /var/tmp; apt-get source -b unrar-nonfree)                          \
