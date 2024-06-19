@@ -3,10 +3,30 @@ HERE="$(cd $(dirname ${BASH_SOURCE[0]})/.. ; pwd)"
 [ -d ${HERE}/tmp ] && TEMP="${HERE}/tmp" || TEMP="/tmp"
 TEMPDIR=$(mktemp -d ${TEMP}/$(basename ${BASH_SOURCE[0]}).XXXX)
 
+################################################################################
 cleanup() {
   [ -d "${TEMPDIR}" ] && rm -rf "${TEMPDIR}"
 }
 trap cleanup EXIT
+
+urlencode() {
+    # urlencode <string>
+    old_lc_collate=$LC_COLLATE
+    LC_COLLATE=C
+
+    local length="${#1}"
+    for (( i = 0; i < length; i++ )); do
+        local c="${1:i:1}"
+        case $c in
+            [a-zA-Z0-9.~_-]) printf "$c" ;;
+            *) printf '%%%02X' "'$c" ;;
+        esac
+    done
+
+    LC_COLLATE=$old_lc_collate
+}
+export -f urlencode
+################################################################################
 
 while [ ! -z "$*" ];do
   case "$1" in
@@ -46,15 +66,16 @@ case "${FILEEXTENSION}" in
   "cbz"|"zip")
     (
       PAGES="$(unzip -jl "${FILENAME}" | sed -e '1,/---------/ d' | sed '/---------/ Q' | egrep -v "${FILESIGNORE}" | awk '{print $NF}' | wc -l)"
+      PAGES=`expr ${PAGES} - 1`
       COUNTER=0
-      unzip -l "${FILENAME}" | sed -e '1,/---------/ d' | sed '/---------/ Q' | egrep -v "${FILESIGNORE}" | cut -b 31- | while read file; do
+      unzip -jl "${FILENAME}" | sed -e '1,/---------/ d' | sed '/---------/ Q' | egrep -v "${FILESIGNORE}" | awk '{if($1!='0'){print $0}}' | sed -e 's/.*[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\s[0-9]\{2\}:[0-9]\{2\}\s*//' | while read file; do
         basefile=$(echo "${file}" | sed 's/.*\///')
         COUNTER=`expr ${COUNTER} + 1`
         echo "${file}" | tr 'A-Z' 'a-z' | sed -e 's/^[^\.]*\.//' | egrep "(jpg|gif|png)" > /dev/null
         EXIT=$?
         if [ $EXIT -eq 0 ]; then
-          GEOMETRY="$(unzip -jp "${FILENAME}" "${file}" | convert - -print "\"width\": %w, \"height\": %h,\n" /dev/null)"
-          echo -n "           {${GEOMETRY} \"uri\": \"$basefile\"}"
+          GEOMETRY="$(unzip -p "${FILENAME}" "$(printf "%q" "${file}}")" | convert - -print "\"width\": %w, \"height\": %h,\n" /dev/null)"
+          echo -n "           {${GEOMETRY} \"uri\": \"$(urlencode "$basefile")\"}"
           [ ${COUNTER} -eq ${PAGES} ] && echo "" || echo ","  
         fi
       done
