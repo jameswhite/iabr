@@ -24,18 +24,18 @@ while [ ! -z "$*" ];do
      ;;
   esac
 done
-DIRNAME="$(dirname ${FILENAME})"
+DIRNAME="$(cd "$(dirname "${FILENAME}")";pwd)"
 cp /var/cache/git/bookreader/_index.html "${DIRNAME}/index.html"
 cp /var/cache/git/bookreader/_index.js "${DIRNAME}/index.js"
 FILESIGNORE="\.([Cc][Ss][Vv]|[Ss][Ff][Vv]|[Tt][Xx][Tt])$"
-FILEEXTENSION="$(echo $FILENAME | sed -e 's/^[^\.]*\.//'| tr 'A-Z' 'a-z')"
+FILEEXTENSION="$(echo $FILENAME | sed -e 's/^.*\.//'| tr 'A-Z' 'a-z')"
 echo -e "{\n "\"ppi\"": 200,\n "\"data\"": [\n           ["
 case "${FILEEXTENSION}" in
   "cbr"|"rar")
     (
-      PAGES="$(unrar l "${FILENAME}"  | sed -e '1,/-----------/ d' | sed '/-----------/ Q' | egrep -v "${FILESIGNORE}" | awk '{print $NF}' | wc -l)"
+      PAGES="$(unrar l "${FILENAME}"  | sed -e '1,/-----------/ d' | sed '/-----------/ Q' | egrep -v "${FILESIGNORE}" | egrep -v "\.\.\.D\.\.\." | sed -e 's/.*\///'| wc -l)"
       COUNTER=0
-      for file in $(unrar l "${FILENAME}"  | sed -e '1,/-----------/ d' | sed '/-----------/ Q' | egrep -v "${FILESIGNORE}" | awk '{print $NF}'); do
+      unrar l "${FILENAME}"  | sed -e '1,/-----------/ d' | sed '/-----------/ Q' | egrep -v "${FILESIGNORE}" | egrep -v "\.\.\.D\.\.\." | sed -e 's/.*[0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\s[0-9]\{2\}:[0-9]\{2\}\s*//' | while read file; do
         COUNTER=`expr ${COUNTER} + 1`
         GEOMETRY="$(unrar p -inul "${FILENAME}" "$file" | convert - -print "\"width\": %w, \"height\": %h,\n" /dev/null)"
         echo -n "             {${GEOMETRY} \"uri\": \"$file\"}"
