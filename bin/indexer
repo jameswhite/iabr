@@ -25,8 +25,8 @@ while [ ! -z "$*" ];do
   esac
 done
 DIRNAME="$(cd "$(dirname "${FILENAME}")";pwd)"
-cp /var/cache/git/bookreader/_index.html "${DIRNAME}/index.html"
-cp /var/cache/git/bookreader/_index.js "${DIRNAME}/index.js"
+cp /etc/bookreader/_index.html "${DIRNAME}/index.html"
+cp /etc/bookreader/_index.js "${DIRNAME}/index.js"
 FILESIGNORE="\.([Cc][Ss][Vv]|[Ss][Ff][Vv]|[Tt][Xx][Tt])$"
 FILEEXTENSION="$(echo $FILENAME | sed -e 's/^.*\.//'| tr 'A-Z' 'a-z')"
 echo -e "{\n "\"ppi\"": 200,\n "\"data\"": [\n           ["
