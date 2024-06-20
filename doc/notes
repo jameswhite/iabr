@@ -8,3 +8,4 @@ wget -d -r -np -N --spider -e robots=off --no-check-certificate  "${URL}"  2>&1 
       sort -u | while read line; do book --url "https://${line}"; done
 
 
+# cat index.raw | grep " -> " |grep -Ev "\/\?C=" | grep  -E "([Cc][Bb][Rr]|[Cc][Bb][Zz])" | awk -F'->' '{print $2}' |   sed -e 's/([^)(]*)$//' | sed -e "s/^\s*'//" -e "s/'\s*$//" -e 's/^\s*//' -e 's/\s*$//' -e 's/https:\/\///' -e 's/%20/ /g' | sort -u | grep 1982 | while read line; do book --url "https://${line}";done
