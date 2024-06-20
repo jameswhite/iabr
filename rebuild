@@ -72,6 +72,9 @@ CMD ["bash"]
 EXPOSE 8000
 EOF
 docker run -i -p8000:8000 --expose=8000 -t iabr /bin/bash -c "(cd /var/cache/git/bookreader; npm run serve -y)"
-#docker run -i -p8000:8000 --expose=8000 -t iabr /bin/bash
 
+# This command will run bash instead of the server, you can still run the server with "(cd /var/cache/git/bookreader; npm run serve -y)" on the command line once the prompt appears
+# docker run -i -p8000:8000 --expose=8000 -t iabr /bin/bash
+
+#  use this command to get into the docker container while it's running and fetch more books:
 #  docker exec -it "$(docker ps | grep iabr | awk '{print $1}')" /bin/bash
