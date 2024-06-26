@@ -82,7 +82,7 @@ server {
 
 	server_name example.org;
 
-	root /var/www/content
+	root /var/www/content;
 	index index.html;
 
 	location / {
