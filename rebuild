@@ -17,7 +17,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-FILE_URI="https://raw.githubusercontent.com/jameswhite/iabr/main/books/Life_Cycle_of_a_Silver_Bullet.pdf"
+FILE_URI="https://raw.githubusercontent.com/jameswhite/iabr/main/doc/Life_Cycle_of_a_Silver_Bullet.pdf"
 while [ ! -z "$*" ];do
   case "$1" in
      "--uri"|"--url")
@@ -47,28 +47,30 @@ ADD rootfs.tar.xz /
 ADD config/etc/apt/sources.list /etc/apt/sources.list
 ADD config/etc/policy.xml /etc/ImageMagick-6-policy.xml
 COPY config/usr/local/bin /usr/local/bin
-RUN [ -f /etc/apt/sources.list.d/debian.sources ] && rm /etc/apt/sources.list.d/debian.sources || true    \
- && apt-get update                                                          \
- && apt-get install -y apt-file file imagemagick jq ghostscript git less net-tools nodejs node-jquery node-jquery-ui npm perlmagick poppler-utils procps unzip vim wget nginx perl libcam-pdf-perl libnginx-mod-http-perl \
- && apt-file update                                                         \
- && apt-get -y build-dep unrar-nonfree                                      \
- && (cd /var/tmp; apt-get source -b unrar-nonfree)                          \
- && (cd /var/tmp; dpkg -i unrar*.deb)                                       \
- && mkdir -p /var/cache/git                                                 \
- && mkdir -p /var/www/html/books                                            \
- && mkdir -p /usr/share/nginx/perl/lib                                      \
+COPY config/var/cache/git/bookreader /etc/bookreader
+RUN [ -f /etc/apt/sources.list.d/debian.sources ] && rm /etc/apt/sources.list.d/debian.sources || true \
+ && apt-get update                                                               \
+ && apt-get install -y apt-file file imagemagick jq ghostscript git less net-tools nodejs node-jquery node-jquery-ui npm perlmagick poppler-utils procps unzip vim wget nginx perl libcam-pdf-perl libnginx-mod-http-perl   \
+ && apt-file update                                                              \
+ && apt-get -y build-dep unrar-nonfree                                           \
+ && (cd /var/tmp; apt-get source -b unrar-nonfree)                               \
+ && (cd /var/tmp; dpkg -i unrar*.deb)                                            \
+ && mkdir -p /var/cache/git                                                      \
+ && mkdir -p /var/www/html/books                                                 \
+ && mkdir -p /usr/share/nginx/perl/lib                                           \
  && (cd /var/cache/git; git clone https://github.com/internetarchive/bookreader) \
- && (cd /var/cache/git/bookreader; git checkout -b laboratory)              \
- && ( cd /var/cache/git/bookreader                                          \
-      yes 'y' | npx update-browserslist-db@latest                           \
-      npm run build --yes || true                                           \
-    )                                                                       \
- && mv /var/cache/git/bookreader/index.html /var/cache/git/bookreader/demo.html \
- && mv /etc/ImageMagick-6-policy.xml /etc/ImageMagick-6/policy.xml || true  \
+ && (cd /var/cache/git/bookreader; git checkout -b laboratory)                   \
+ && ( cd /var/cache/git/bookreader                                               \
+      yes 'y' | npx update-browserslist-db@latest                                \
+      npm run build --yes || true                                                \
+    )                                                                            \
+ && mv /var/cache/git/bookreader/index.html /var/cache/git/bookreader/demo.html  \
+ && mv /etc/ImageMagick-6-policy.xml /etc/ImageMagick-6/policy.xml || true       \
  && /usr/local/bin/book --uri "${FILE_URI}" || true
 COPY config/ /
 CMD ["bash"]
 EXPOSE 8000
 EOF
 
+# run our container, map port 8000 back to it, mount ./books under the www root, start nginx and run bash
 docker run -i -p8000:8000 --expose=8000 -v $(pwd)/books:/var/www/html/books -t iabr /bin/bash -c "/usr/sbin/service nginx start && /bin/bash"

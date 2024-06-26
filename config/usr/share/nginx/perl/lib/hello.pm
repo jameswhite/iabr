@@ -17,7 +17,14 @@ sub handler {
     if($r->args =~ /page=(idx|\d+)/){ $page=$1; }
 
     # Define the input PDF file and the output PNG file
-    my $pdf_file = '/var/cache/git/bookreader/Drmg062/Drmg062.pdf';
+    my $pdf_file = "${book_dir}/Dragon/Drmg062.pdf";
+    my $book_dir = '/var/www/html/books';
+    $r->log_error(0, Data::Dumper->Dump([$r->filename]));
+    if($r->filename=~/\/iabr\/(.*)/){
+      $rel_file = "$1";
+      $pdf_file = "${book_dir}/${rel_file}";
+    }
+    $r->log_error(0, Data::Dumper->Dump([$pdf_file]));
 
     # Create a new Image::Magick object
     my $image = Image::Magick::Q16->new;
@@ -32,7 +39,7 @@ sub handler {
       my $status = $image->Read("pdf:${pdf_file}");
       for my $page_number (0 .. $page_count-1) {
           my $current_page=$page_number + 1;
-          $r->print("    {\"width\": 1275, \"height\": 1650, \"uri\": \"/?page=${current_page}\"}");
+          $r->print("    {\"width\": 1275, \"height\": 1650, \"uri\": \"/iabr/${rel_file}?page=${current_page}\"}");
           if($current_page < $page_count){
             $r->print(",\n");
           }else{
