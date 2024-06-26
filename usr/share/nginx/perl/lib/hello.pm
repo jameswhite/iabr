@@ -22,51 +22,40 @@ sub handler {
     # Create a new Image::Magick object
     my $image = Image::Magick::Q16->new;
 
+
     if($page eq "idx"){
       my $pdf = CAM::PDF->new($pdf_file);
       my $page_count = $pdf->numPages();
       $r->log_error(0, "Page count is: $page_count\n");
       $r->send_http_header("application/json");
-      $r->print('{');
-      $r->print("\"pages\":$page_count");
+      $r->print("{\n  \"ppi\": 200,\n  \"data\": [\n");
       my $status = $image->Read("pdf:${pdf_file}");
       for my $page_number (0 .. $page_count-1) {
-          $image->Set(index => $page_number);
-          my ($width, $height) = $image->Get('width', 'height');
           my $current_page=$page_number + 1;
-          $r->print("$current_page $width x $height\n");
+          $r->print("    {\"width\": 1275, \"height\": 1650, \"uri\": \"/?page=${current_page}\"}");
+          if($current_page < $page_count){
+            $r->print(",\n");
+          }else{
+            $r->print("\n");
+          }
+
       }
-      $r->print('}');
+      $r->print("  ]\n");
+      $r->print("}");
    
     }else{
     # Read the specific page from the PDF file
-    my $status = $image->Read("pdf:${pdf_file}[${page}]");
-    die "Error reading PDF file: $status" if $status;
-
-    # Write the image to a PNG file
-    $image->Set(alpha => 'On');
-    $image->Transparent(color => 'white');
-    $image->Set(colorspace => 'RGB');     
-    $image->Set(magick => 'png');
-    $image->Set(density => '200x200');     
-    $image->Resize(width => 1275, height => 1650);
-
-    # Response
+    # The native perlmagick stuff doesn't seem to be able to upscale, so using the shell
+    open(my $convert_fh, '-|', "convert -density 200 $pdf_file\[$page\] png:-") 
+      or die "Cannot open convert process: $!";
+    $convert_fh->autoflush(1);
     $r->send_http_header("image/png");
     binmode STDOUT;
-    $r->print($image->ImageToBlob());
+    $r->print(<$convert_fh>);
+    close($convert_fh);
    }
 
-
-
-#    $r->print("hello!\n<br/>");
-#    $r->print( Data::Dumper->Dump([$r->args]) );
-
-#    if (-f $r->filename or -d _) {
-#        $r->print($r->uri, " exists!\n");
-#    }
-
-    return OK;
+   return OK;
 }
 
 1;
