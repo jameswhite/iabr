@@ -87,6 +87,8 @@ server {
 	index index.html index.htm index.nginx-debian.html;
 
 	location / {
+		rewrite_log on;
+		rewrite ^/books/(.*\.pdf)$ /iabr/$1?page=html redirect;
 		try_files $uri $uri/ =404;
                 autoindex on;
 	}

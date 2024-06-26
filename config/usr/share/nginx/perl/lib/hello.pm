@@ -3,7 +3,6 @@ package hello;
 # use strict;
 use CAM::PDF;
 use Data::Dumper;
-use Image::Magick::Q16;
 use nginx;
 use warnings;
 
@@ -13,43 +12,51 @@ sub handler {
     return OK if $r->header_only;
 
     my $page="0";
-    $r->log_error(0, $r->args);
-    if($r->args =~ /page=(idx|\d+)/){ $page=$1; }
+    if($r->args =~ /page=(html|idx|json|js|\d+)$/){ $page=$1; }
 
     # Define the input PDF file and the output PNG file
-    my $pdf_file = "${book_dir}/Dragon/Drmg062.pdf";
     my $book_dir = '/var/www/html/books';
-    $r->log_error(0, Data::Dumper->Dump([$r->filename]));
+    my $pdf_file = "${book_dir}/Dragon/Drmg062.pdf";
+
     if($r->filename=~/\/iabr\/(.*)/){
       $rel_file = "$1";
       $pdf_file = "${book_dir}/${rel_file}";
     }
-    $r->log_error(0, Data::Dumper->Dump([$pdf_file]));
 
-    # Create a new Image::Magick object
-    my $image = Image::Magick::Q16->new;
-
-
-    if($page eq "idx"){
+    if($page eq "json"){
       my $pdf = CAM::PDF->new($pdf_file);
       my $page_count = $pdf->numPages();
-      $r->log_error(0, "Page count is: $page_count\n");
       $r->send_http_header("application/json");
-      $r->print("{\n  \"ppi\": 200,\n  \"data\": [\n");
-      my $status = $image->Read("pdf:${pdf_file}");
+      $r->print("{\n  \"ppi\": 200,\n  \"data\": [\n            [\n");
       for my $page_number (0 .. $page_count-1) {
-          my $current_page=$page_number + 1;
-          $r->print("    {\"width\": 1275, \"height\": 1650, \"uri\": \"/iabr/${rel_file}?page=${current_page}\"}");
-          if($current_page < $page_count){
+          my $current_page=$page_number;
+          $r->print("              {\"width\": 1275, \"height\": 1650, \"uri\": \"/iabr/${rel_file}?page=${current_page}\"}");
+          if($current_page < $page_count - 1){
             $r->print(",\n");
           }else{
             $r->print("\n");
           }
-
       }
-      $r->print("  ]\n");
+      $r->print("            ]\n         ],\n");
+      $r->print("   \"bookTitle\": \"BookShelf\",\n");
+      $r->print("   \"bookUrl\": \"/\",\n");
+      $r->print("   \"ui\": \"full\",\n");
+      $r->print("   \"el\": \"#BookReader\"\n");
       $r->print("}");
-   
+    }elsif($page eq "html"){
+      open(my $in_fh, '<', "/var/cache/git/bookreader/_index.html") or die "Cannot open /var/cache/git/bookreader/_index.html for reading: $!";
+      my $content = do { local $/; <$in_fh> };
+      close($in_fh) or die "Cannot close $input_file: $!";
+      $content =~ s/index.js/\/iabr\/$rel_file?page=js/g;
+      $r->send_http_header("text/html");
+      $r->print($content);
+    }elsif($page eq "js"){
+      open(my $in_fh, '<', "/var/cache/git/bookreader/_index.js") or die "Cannot open /var/cache/git/bookreader/_index.js for reading: $!";
+      my $content = do { local $/; <$in_fh> };
+      close($in_fh) or die "Cannot close $input_file: $!";
+      $content =~ s/index.json/\/iabr\/$rel_file?page=json/g;
+      $r->send_http_header("text/javascript");
+      $r->print($content);
     }else{
     # Read the specific page from the PDF file
     # The native perlmagick stuff doesn't seem to be able to upscale, so using the shell
