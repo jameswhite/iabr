@@ -17,7 +17,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-FILE_URI="https://raw.githubusercontent.com/jameswhite/iabr/main/doc/Life_Cycle_of_a_Silver_Bullet.pdf"
+FILE_URI="https://raw.githubusercontent.com/jameswhite/iabr/main/books/Life_Cycle_of_a_Silver_Bullet.pdf"
 while [ ! -z "$*" ];do
   case "$1" in
      "--uri"|"--url")
