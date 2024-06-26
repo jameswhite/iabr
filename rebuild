@@ -17,6 +17,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
+FILE_URI="https://raw.githubusercontent.com/jameswhite/iabr/main/books/Life_Cycle_of_a_Silver_Bullet.pdf"
 while [ ! -z "$*" ];do
   case "$1" in
      "--uri"|"--url")
@@ -38,43 +39,36 @@ docker image list | grep iabr | awk '{print $3}' | grep -v IMAGE | xargs docker 
 HERE="$(cd $(dirname ${BASH_SOURCE[0]}); pwd)"
 # Get our root filesystem if we don't have one):
 [ -f ${HERE}/rootfs.tar.xz ] || curl "https://raw.githubusercontent.com/jameswhite/rootfs/main/$(curl https://raw.githubusercontent.com/jameswhite/rootfs/main/rootfs.tar.xz)" > rootfs.tar.xz
-
 # ensure COPY will work from script dir
 cd ${HERE}
 cat << EOF | docker build --no-cache --progress=plain -t iabr -f - "${HERE}"
 FROM scratch
 ADD rootfs.tar.xz /
-ADD sources.list /etc/apt/sources.list
-ADD policy.xml /etc/ImageMagick-6-policy.xml
-COPY bin /usr/local/bin
-COPY bookreader /etc/bookreader
+ADD config/etc/apt/sources.list /etc/apt/sources.list
+ADD config/etc/policy.xml /etc/ImageMagick-6-policy.xml
+COPY config/usr/local/bin /usr/local/bin
 RUN [ -f /etc/apt/sources.list.d/debian.sources ] && rm /etc/apt/sources.list.d/debian.sources || true    \
  && apt-get update                                                          \
- && apt-get install -y apt-file file imagemagick ghostscript git net-tools nodejs node-jquery node-jquery-ui npm poppler-utils procps unzip vim wget \
+ && apt-get install -y apt-file file imagemagick jq ghostscript git less net-tools nodejs node-jquery node-jquery-ui npm perlmagick poppler-utils procps unzip vim wget nginx perl libcam-pdf-perl libnginx-mod-http-perl \
  && apt-file update                                                         \
  && apt-get -y build-dep unrar-nonfree                                      \
  && (cd /var/tmp; apt-get source -b unrar-nonfree)                          \
  && (cd /var/tmp; dpkg -i unrar*.deb)                                       \
  && mkdir -p /var/cache/git                                                 \
+ && mkdir -p /var/www/html/books                                            \
+ && mkdir -p /usr/share/nginx/perl/lib                                      \
  && (cd /var/cache/git; git clone https://github.com/internetarchive/bookreader) \
  && (cd /var/cache/git/bookreader; git checkout -b laboratory)              \
- && (                                                                       \
-      cd /var/cache/git/bookreader                                          \
+ && ( cd /var/cache/git/bookreader                                          \
       yes 'y' | npx update-browserslist-db@latest                           \
       npm run build --yes || true                                           \
     )                                                                       \
  && mv /var/cache/git/bookreader/index.html /var/cache/git/bookreader/demo.html \
- && cp /etc/ImageMagick-6-policy.xml /etc/ImageMagick-6/policy.xml || true  \
+ && mv /etc/ImageMagick-6-policy.xml /etc/ImageMagick-6/policy.xml || true  \
  && /usr/local/bin/book --uri "${FILE_URI}" || true
-COPY bookreader /var/cache/git/bookreader
+COPY config/ /
 CMD ["bash"]
-# CMD ["(cd /var/cache/git/bookreader; npm run serve -y)"]
 EXPOSE 8000
 EOF
-docker run -i -p8000:8000 --expose=8000 -t iabr /bin/bash -c "(cd /var/cache/git/bookreader; npm run serve -y)"
 
-# This command will run bash instead of the server, you can still run the server with "(cd /var/cache/git/bookreader; npm run serve -y)" on the command line once the prompt appears
-# docker run -i -p8000:8000 --expose=8000 -t iabr /bin/bash
-
-#  use this command to get into the docker container while it's running and fetch more books:
-#  docker exec -it "$(docker ps | grep iabr | awk '{print $1}')" /bin/bash
+docker run -i -p8000:8000 --expose=8000 -v $(pwd)/books:/var/www/html/books -t iabr /bin/bash -c "/usr/sbin/service nginx start && /bin/bash"
