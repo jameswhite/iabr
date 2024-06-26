@@ -64,6 +64,7 @@ RUN [ -f /etc/apt/sources.list.d/debian.sources ] && rm /etc/apt/sources.list.d/
       yes 'y' | npx update-browserslist-db@latest                                \
       npm run build --yes || true                                                \
     )                                                                            \
+ && cp -rp /var/cache/git/bookreader/BookReader /var/www/html/js                  \
  && mv /var/cache/git/bookreader/index.html /var/cache/git/bookreader/demo.html  \
  && mv /etc/ImageMagick-6-policy.xml /etc/ImageMagick-6/policy.xml || true       \
  && /usr/local/bin/book --uri "${FILE_URI}" || true
