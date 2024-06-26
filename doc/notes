@@ -9,3 +9,8 @@ wget -d -r -np -N --spider -e robots=off --no-check-certificate  "${URL}"  2>&1 
 
 
 # cat index.raw | grep " -> " |grep -Ev "\/\?C=" | grep  -E "([Cc][Bb][Rr]|[Cc][Bb][Zz])" | awk -F'->' '{print $2}' |   sed -e 's/([^)(]*)$//' | sed -e "s/^\s*'//" -e "s/'\s*$//" -e 's/^\s*//' -e 's/\s*$//' -e 's/https:\/\///' -e 's/%20/ /g' | sort -u | grep 1982 | while read line; do book --url "https://${line}";done
+
+
+clear;tail -f /var/log/nginx/error.log
+clear; echo -e '\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n' >> /var/log/nginx/error.log; /etc/init.d/nginx restart; curl http://127.0.0.1:8000/?page=idx > idx; file idx; curl http://127.0.0.1:8000/?page=0 > img; file img; head idx; echo "    ..."; tail idx
+

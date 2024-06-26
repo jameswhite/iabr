@@ -43,10 +43,10 @@ cd ${HERE}
 cat << EOF | docker build --no-cache --progress=plain -t iabr -f - "${HERE}"
 FROM scratch
 ADD rootfs.tar.xz /
-ADD sources.list /etc/apt/sources.list
-ADD policy.xml /etc/ImageMagick-6-policy.xml
-COPY bin /usr/local/bin
-COPY bookreader /etc/bookreader
+ADD config/etc/apt/sources.list /etc/apt/sources.list
+ADD config/etc/policy.xml /etc/ImageMagick-6-policy.xml
+COPY config/usr/local/bin /usr/local/bin
+COPY config/etc/bookreader /etc/bookreader
 RUN [ -f /etc/apt/sources.list.d/debian.sources ] && rm /etc/apt/sources.list.d/debian.sources || true    \
  && apt-get update                                                          \
  && apt-get install -y apt-file file imagemagick jq ghostscript git less net-tools nodejs node-jquery node-jquery-ui npm perlmagick poppler-utils procps unzip vim wget nginx perl libcam-pdf-perl libnginx-mod-http-perl \
@@ -55,17 +55,21 @@ RUN [ -f /etc/apt/sources.list.d/debian.sources ] && rm /etc/apt/sources.list.d/
  && (cd /var/tmp; apt-get source -b unrar-nonfree)                          \
  && (cd /var/tmp; dpkg -i unrar*.deb)                                       \
  && mkdir -p /var/cache/git                                                 \
+ && mkdir -p /var/www/html/content                                          \
+ && mkdir -p /usr/share/nginx/perl/lib                                      \
  && (cd /var/cache/git; git clone https://github.com/internetarchive/bookreader) \
  && (cd /var/cache/git/bookreader; git checkout -b laboratory)              \
- && (                                                                       \
-      cd /var/cache/git/bookreader                                          \
+ && (                                                                       \ cd /var/cache/git/bookreader                                          \
       yes 'y' | npx update-browserslist-db@latest                           \
       npm run build --yes || true                                           \
     )                                                                       \
  && mv /var/cache/git/bookreader/index.html /var/cache/git/bookreader/demo.html \
  && cp /etc/ImageMagick-6-policy.xml /etc/ImageMagick-6/policy.xml || true  \
- && /usr/local/bin/book --uri "${FILE_URI}" || true
-COPY bookreader /var/cache/git/bookreader
+ && /usr/local/bin/book --uri "${FILE_URI}" || true                         \
+COPY config/etc/bookreader /var/cache/git/bookreader                        \
+ADD config/etc/nginx/nginx.conf /etc/nginx/nginx.conf                       \
+ADD config/etc/nginx/sites-enabled/default /etc/nginx/sites-enabled/default \
+ADD config/usr/share/nginx/perl/lib/hello.pm /config/usr/share/nginx/perl/lib/hello.pm
 CMD ["bash"]
 # CMD ["(cd /var/cache/git/bookreader; npm run serve -y)"]
 EXPOSE 8000
@@ -75,7 +79,7 @@ EOF
 # docker run -i -p8000:8000 --expose=8000 -t iabr /bin/bash -c "(cd /var/cache/git/bookreader; npm run serve -y)"
 
 # This command will run bash instead of the server, you can still run the server with "(cd /var/cache/git/bookreader; npm run serve -y)" on the command line once the prompt appears
-docker run -i -p8000:8000 --expose=8000 -t iabr /bin/bash
+docker run -i -p8000:8000 --expose=8000 -v $(pwd)/content:/var/www/html/content -t iabr /usr/sbin/service nginx start && /bin/bash
 
 #  use this command to get into the docker container while it's running and fetch more books:
 #  docker exec -it "$(docker ps | grep iabr | awk '{print $1}')" /bin/bash
