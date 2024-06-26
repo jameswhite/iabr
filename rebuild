@@ -65,17 +65,10 @@ RUN [ -f /etc/apt/sources.list.d/debian.sources ] && rm /etc/apt/sources.list.d/
     )                                                                       \
  && mv /var/cache/git/bookreader/index.html /var/cache/git/bookreader/demo.html \
  && mv /etc/ImageMagick-6-policy.xml /etc/ImageMagick-6/policy.xml || true  \
- && /usr/local/bin/book --uri "${FILE_URI}" || true                         \
+ && /usr/local/bin/book --uri "${FILE_URI}" || true
 COPY config/ /
 CMD ["bash"]
 EXPOSE 8000
 EOF
 
-# This command will run the node server
-# docker run -i -p8000:8000 --expose=8000 -t iabr /bin/bash -c "(cd /var/cache/git/bookreader; npm run serve -y)"
-
-# This command will run bash instead of the server, you can still run the server with "(cd /var/cache/git/bookreader; npm run serve -y)" on the command line once the prompt appears
 docker run -i -p8000:8000 --expose=8000 -v $(pwd)/books:/var/www/html/books -t iabr /bin/bash -c "/usr/sbin/service nginx start && /bin/bash"
-
-#  use this command to get into the docker container while it's running and fetch more books:
-#  docker exec -it "$(docker ps | grep iabr | awk '{print $1}')" /bin/bash
