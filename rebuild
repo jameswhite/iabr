@@ -67,6 +67,7 @@ RUN [ -f /etc/apt/sources.list.d/debian.sources ] && rm /etc/apt/sources.list.d/
  && cp -rp /var/cache/git/bookreader/BookReader /var/www/html/BookReader         \
  && mv /var/cache/git/bookreader/index.html /var/cache/git/bookreader/demo.html  \
  && mv /etc/ImageMagick-6-policy.xml /etc/ImageMagick-6/policy.xml || true       \
+ && rm /var/www/html/index.nginx-debian.html                                     \
  && /usr/local/bin/book --uri "${FILE_URI}" || true
 COPY config/ /
 CMD ["bash"]
