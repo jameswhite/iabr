@@ -50,7 +50,7 @@ COPY config/usr/local/bin /usr/local/bin
 COPY config/var/cache/git/bookreader /etc/bookreader
 RUN [ -f /etc/apt/sources.list.d/debian.sources ] && rm /etc/apt/sources.list.d/debian.sources || true \
  && apt-get update                                                               \
- && apt-get install -y apt-file file imagemagick jq ghostscript git less net-tools nodejs node-jquery node-jquery-ui npm perlmagick poppler-utils procps unzip vim wget nginx perl libcam-pdf-perl libnginx-mod-http-perl   \
+ && apt-get install -y apt-file file imagemagick jq ghostscript git less net-tools nodejs node-jquery node-jquery-ui npm perlmagick poppler-utils procps unzip vim wget nginx perl libcam-pdf-perl libnginx-mod-http-perl liburi-encode-perl liburi-escape-xs-perl \
  && apt-file update                                                              \
  && apt-get -y build-dep unrar-nonfree                                           \
  && (cd /var/tmp; apt-get source -b unrar-nonfree)                               \
