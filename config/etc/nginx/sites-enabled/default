@@ -93,6 +93,6 @@ server {
                 autoindex on;
 	}
 	location /iabr {
-                perl hello::handler;
+                perl iabr::handler;
 	}
 }
