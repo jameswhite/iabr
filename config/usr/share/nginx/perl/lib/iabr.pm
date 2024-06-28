@@ -8,11 +8,27 @@ use URI::Encode qw( uri_encode );
 use URI::Escape::XS qw( uri_unescape );
 use warnings;
 
-
 sub handler {
     my $r = shift;
-
     return OK if $r->header_only;
+
+    if ($r->filename =~ /\.pdf$/){
+      $r->iabr::pdf_handler;
+    }elsif ($r->filename =~ /\.cbr$/){
+      $r->send_http_header("text/html");
+      $r->print("Rar file processing...");
+    }elsif ($r->filename =~ /\.cbz$/){
+      $r->send_http_header("text/html");
+      $r->print("Zip file processing...");
+    }else{
+      $r->send_http_header("text/html");
+      $r->print("How did you get here?");
+    }
+    
+}
+
+sub pdf_handler {
+    my $r = shift;
 
     my $page="0";
     if($r->args =~ /page=(html|idx|json|js|\d+)$/){ $page=$1; }
@@ -69,8 +85,7 @@ sub handler {
     }else{
     # Read the specific page from the PDF file
     # The native perlmagick stuff doesn't seem to be able to upscale, so using the shell
-    $r->log_error(0,"::::::::::::".quotemeta(uri_unescape($pdf_file))."::::::::::::::::\n");
-    open(my $convert_fh, '-|', "convert -density 200 ". quotemeta(uri_unescape($pdf_file)) ."\[$page\] png:-") 
+    open(my $convert_fh, '-|', "convert -density 200 ". quotemeta(uri_unescape($pdf_file)) ."\[$page\] png:- 2>/dev/null") 
       or die "Cannot open convert process: $!";
     $convert_fh->autoflush(1);
     $r->send_http_header("image/png");

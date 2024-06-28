@@ -88,7 +88,7 @@ server {
 
 	location / {
 		rewrite_log on;
-		rewrite ^/books/(.*\.pdf)$ /iabr/$1?page=html redirect;
+		rewrite ^/books/(.*\.(pdf|cbr|cbz))$ /iabr/$1?page=html redirect;
 		try_files $uri $uri/ =404;
                 autoindex on;
 	}
