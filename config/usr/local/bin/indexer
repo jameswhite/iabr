@@ -59,7 +59,7 @@ case "${FILEEXTENSION}" in
         COUNTER=`expr ${COUNTER} + 1`
         GEOMETRY="$(unrar p -inul "${FILENAME}" "$file" | convert - -print "\"width\": %w, \"height\": %h,\n" /dev/null)"
         echo -n "             {${GEOMETRY} \"uri\": \"$file\"}"
-        [ ${COUNTER} -eq ${PAGES} ] && echo "" || echo ","  
+        [ ${COUNTER} -eq ${PAGES} ] && echo "" || echo ","
       done
     )
   ;;
