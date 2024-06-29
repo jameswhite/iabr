@@ -15,16 +15,126 @@ sub handler {
     if ($r->filename =~ /\.pdf$/){
       $r->iabr::pdf_handler;
     }elsif ($r->filename =~ /\.cbr$/){
-      $r->send_http_header("text/html");
-      $r->print("Rar file processing...");
+      $r->iabr::cbr_handler;
     }elsif ($r->filename =~ /\.cbz$/){
-      $r->send_http_header("text/html");
-      $r->print("Zip file processing...");
+      $r->iabr::cbz_handler;
     }else{
       $r->send_http_header("text/html");
       $r->print("How did you get here?");
     }
     
+}
+
+sub cbr_handler {
+    my $r = shift;
+    my $page="0";
+    if($r->args =~ /page=(html|idx|json|js|\d+)$/){ $page=$1; }
+
+    # Define the input PDF file and the output PNG file
+    my $book_dir = '/var/www/html/books';
+    my $rar_file = "${book_dir}/Life_Cycle_of_a_Silver_Bullet.pdf"; # should be a .cbr
+
+    $r->send_http_header("text/html");
+    $r->print("Rar file processing...");
+
+    if($r->filename=~/\/iabr\/(.*)/){
+      $rel_file = "$1";
+      $rar_file = "${book_dir}/${rel_file}";
+    }
+
+    if($page eq "json"){      # return the json index
+    #####################
+    ### Index Handler ###
+    #####################
+    open(my $index_fh, '-|', "unrar lb ". quotemeta(uri_unescape($rar_file)). " 2>/dev/null") or die "Cannot open index process: $!";
+    #$index_fh->autoflush(1);
+    while (my $inner_file=<$index_fh>){
+      $inner_file=quotemeta($inner_file);
+      $r->print("${inner_file}<br>");
+      my $outer_file=quotemeta(uri_unescape($rar_file));
+      $r->print("${outer_file} :: ${inner_file}<br>");
+      $r->print("/usr/bin/unrar p -inul ${outer_file} ${inner_file} | /usr/bin/convert - -print \"%wx%h\"");
+      $r->print(`/usr/bin/unrar p -inul ${outer_file} ${inner_file}  | /usr/bin/convert - -print "%wx%h"`);
+      $r->print("<br>");
+    }
+    close($index_fh);
+    return OK;
+
+    #####################
+    ### Index Handler ###
+    #####################
+    }elsif($page eq "html"){  # return the html that calls the json
+      open(my $in_fh, '<', "/var/cache/git/bookreader/_index.html") or die "Cannot open /var/cache/git/bookreader/_index.html for reading: $!";
+      my $content = do { local $/; <$in_fh> };
+      close($in_fh) or die "Cannot close $input_file: $!";
+      my $js_uri=uri_encode("\/iabr\/$rel_file?page=js");
+      $js_uri=~s/#/%23/g;
+      $content =~ s/index.js/$js_uri/g;
+      $r->send_http_header("text/html");
+      $r->print($content);
+    }elsif($page eq "js"){    # return the javascript template
+      open(my $in_fh, '<', "/var/cache/git/bookreader/_index.js") or die "Cannot open /var/cache/git/bookreader/_index.js for reading: $!";
+      my $content = do { local $/; <$in_fh> };
+      close($in_fh) or die "Cannot close $input_file: $!";
+      my $json_uri=uri_encode("\/iabr\/$rel_file?page=json");
+      $json_uri=~s/#/%23/g;
+      $content =~ s/index.json/$json_uri/g;
+      $r->send_http_header("text/javascript");
+      $r->print($content);
+    }else{                    # it's a single page, return an image
+      ####################
+      ### Page Handler ###
+      ####################
+    }
+   return OK;
+}
+
+sub cbz_handler {
+    my $r = shift;
+    my $page="0";
+    if($r->args =~ /page=(html|idx|json|js|\d+)$/){ $page=$1; }
+
+    # Define the input PDF file and the output PNG file
+    my $book_dir = '/var/www/html/books';
+    my $pdf_file = "${book_dir}/Life_Cycle_of_a_Silver_Bullet.pdf"; # should be a .cbz
+
+    $r->send_http_header("text/html");
+    $r->print("Zip file processing...");
+    return OK;
+
+    if($r->filename=~/\/iabr\/(.*)/){
+      $rel_file = "$1";
+      $pdf_file = "${book_dir}/${rel_file}";
+    }
+
+    if($page eq "json"){      # return the json index
+      #####################
+      ### Index Handler ###
+      #####################
+    }elsif($page eq "html"){  # return the html that calls the json
+      open(my $in_fh, '<', "/var/cache/git/bookreader/_index.html") or die "Cannot open /var/cache/git/bookreader/_index.html for reading: $!";
+      my $content = do { local $/; <$in_fh> };
+      close($in_fh) or die "Cannot close $input_file: $!";
+      my $js_uri=uri_encode("\/iabr\/$rel_file?page=js");
+      $js_uri=~s/#/%23/g;
+      $content =~ s/index.js/$js_uri/g;
+      $r->send_http_header("text/html");
+      $r->print($content);
+    }elsif($page eq "js"){    # return the javascript template
+      open(my $in_fh, '<', "/var/cache/git/bookreader/_index.js") or die "Cannot open /var/cache/git/bookreader/_index.js for reading: $!";
+      my $content = do { local $/; <$in_fh> };
+      close($in_fh) or die "Cannot close $input_file: $!";
+      my $json_uri=uri_encode("\/iabr\/$rel_file?page=json");
+      $json_uri=~s/#/%23/g;
+      $content =~ s/index.json/$json_uri/g;
+      $r->send_http_header("text/javascript");
+      $r->print($content);
+    }else{                    # it's a single page, return an image
+      ####################
+      ### Page Handler ###
+      ####################
+    }
+   return OK;
 }
 
 sub pdf_handler {
@@ -35,7 +145,7 @@ sub pdf_handler {
 
     # Define the input PDF file and the output PNG file
     my $book_dir = '/var/www/html/books';
-    my $pdf_file = "${book_dir}/Dragon/Drmg062.pdf";
+    my $pdf_file = "${book_dir}/Life_Cycle_of_a_Silver_Bullet.pdf";
 
     if($r->filename=~/\/iabr\/(.*)/){
       $rel_file = "$1";
