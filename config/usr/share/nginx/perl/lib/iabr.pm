@@ -5,7 +5,7 @@ use CAM::PDF;
 use Data::Dumper;
 use nginx;
 use URI::Encode qw( uri_encode );
-use URI::Escape::XS qw( uri_unescape );
+use URI::Escape::XS qw( uri_unescape uri_escape );
 use warnings;
 
 sub handler {
@@ -34,8 +34,6 @@ sub cbr_handler {
     my $book_dir = '/var/www/html/books';
     my $rar_file = "${book_dir}/Life_Cycle_of_a_Silver_Bullet.pdf"; # should be a .cbr
 
-    $r->send_http_header("text/html");
-    $r->print("Rar file processing...");
 
     if($r->filename=~/\/iabr\/(.*)/){
       $rel_file = "$1";
@@ -46,17 +44,38 @@ sub cbr_handler {
     #####################
     ### Index Handler ###
     #####################
+    my $page_count=0;
+    open(my $counter_fh, '-|', "unrar lb ". quotemeta(uri_unescape($rar_file)). " 2>/dev/null") or die "Cannot open index process: $!";
+    while (my $line=<$counter_fh>){
+      $page_count++;
+    }
+    close($counter_fh);
+    my $line_count=0;
+    $r->send_http_header("application/json");
+    $r->print("{\n  \"ppi\": 200,\n  \"data\": [\n            [\n");
     open(my $index_fh, '-|', "unrar lb ". quotemeta(uri_unescape($rar_file)). " 2>/dev/null") or die "Cannot open index process: $!";
     #$index_fh->autoflush(1);
-    while (my $inner_file=<$index_fh>){
-      $inner_file=quotemeta($inner_file);
-      $r->print("${inner_file}<br>");
+    while (my $raw_file=<$index_fh>){
+      chomp($raw_file);
+      $inner_file=quotemeta($raw_file);
+      $uri_file=uri_escape($raw_file);
       my $outer_file=quotemeta(uri_unescape($rar_file));
-      $r->print("${outer_file} :: ${inner_file}<br>");
-      $r->print("/usr/bin/unrar p -inul ${outer_file} ${inner_file} | /usr/bin/convert - -print \"%wx%h\"");
-      $r->print(`/usr/bin/unrar p -inul ${outer_file} ${inner_file}  | /usr/bin/convert - -print "%wx%h"`);
-      $r->print("<br>");
+      $line_count++;
+      $r->print("              {");
+      $r->print(`/usr/bin/unrar p -inul ${outer_file} ${inner_file}  | /usr/bin/convert - -print "\\"width\\": %w, \\"height\\": %h, " /dev/null`);
+      $r->print("\"uri\": \"/iabr/${rel_file}?page=$uri_file\"}");
+      if($line_count < $page_count){
+        $r->print(",\n");
+      }else{
+        $r->print("\n");
+      }
     }
+    $r->print("            ]\n         ],\n");
+    $r->print("   \"bookTitle\": \"BookShelf\",\n");
+    $r->print("   \"bookUrl\": \"/\",\n");
+    $r->print("   \"ui\": \"full\",\n");
+    $r->print("   \"el\": \"#BookReader\"\n");
+    $r->print("}");
     close($index_fh);
     return OK;
 
