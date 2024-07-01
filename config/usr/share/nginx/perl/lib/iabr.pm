@@ -28,7 +28,7 @@ sub handler {
 sub cbr_handler {
     my $r = shift;
     my $page="0";
-    if($r->args =~ /page=(html|idx|json|js|\d+)$/){ $page=$1; }
+    if($r->args =~ /page=(html|idx|json|js|\d+)$/){ $page=$1; }else{ $page=$r->args; $page=~s/^page=//;}
 
     # Define the input PDF file and the output PNG file
     my $book_dir = '/var/www/html/books';
@@ -41,47 +41,40 @@ sub cbr_handler {
     }
 
     if($page eq "json"){      # return the json index
-    #####################
-    ### Index Handler ###
-    #####################
-    my $page_count=0;
-    open(my $counter_fh, '-|', "unrar lb ". quotemeta(uri_unescape($rar_file)). " 2>/dev/null") or die "Cannot open index process: $!";
-    while (my $line=<$counter_fh>){
-      $page_count++;
-    }
-    close($counter_fh);
-    my $line_count=0;
-    $r->send_http_header("application/json");
-    $r->print("{\n  \"ppi\": 200,\n  \"data\": [\n            [\n");
-    open(my $index_fh, '-|', "unrar lb ". quotemeta(uri_unescape($rar_file)). " 2>/dev/null") or die "Cannot open index process: $!";
-    #$index_fh->autoflush(1);
-    while (my $raw_file=<$index_fh>){
-      chomp($raw_file);
-      $inner_file=quotemeta($raw_file);
-      $uri_file=uri_escape($raw_file);
-      my $outer_file=quotemeta(uri_unescape($rar_file));
-      $line_count++;
-      $r->print("              {");
-      $r->print(`/usr/bin/unrar p -inul ${outer_file} ${inner_file}  | /usr/bin/convert - -print "\\"width\\": %w, \\"height\\": %h, " /dev/null`);
-      $r->print("\"uri\": \"/iabr/${rel_file}?page=$uri_file\"}");
-      if($line_count < $page_count){
-        $r->print(",\n");
-      }else{
-        $r->print("\n");
+      my $page_count=0;
+      open(my $counter_fh, '-|', "unrar lb ". quotemeta(uri_unescape($rar_file)). " 2>/dev/null") or die "Cannot open index process: $!";
+      while (my $line=<$counter_fh>){
+        $page_count++;
       }
-    }
-    $r->print("            ]\n         ],\n");
-    $r->print("   \"bookTitle\": \"BookShelf\",\n");
-    $r->print("   \"bookUrl\": \"/\",\n");
-    $r->print("   \"ui\": \"full\",\n");
-    $r->print("   \"el\": \"#BookReader\"\n");
-    $r->print("}");
-    close($index_fh);
-    return OK;
-
-    #####################
-    ### Index Handler ###
-    #####################
+      close($counter_fh);
+      my $line_count=0;
+      $r->send_http_header("application/json");
+      $r->print("{\n  \"ppi\": 200,\n  \"data\": [\n            [\n");
+      open(my $index_fh, '-|', "unrar lb ". quotemeta(uri_unescape($rar_file)). " 2>/dev/null") or die "Cannot open index process: $!";
+      #$index_fh->autoflush(1);
+      while (my $raw_file=<$index_fh>){
+        chomp($raw_file);
+        $inner_file=quotemeta($raw_file);
+        $uri_file=uri_escape($raw_file);
+        my $outer_file=quotemeta(uri_unescape($rar_file));
+        $line_count++;
+        $r->print("              {");
+        $r->print(`/usr/bin/unrar p -inul ${outer_file} ${inner_file}  | /usr/bin/convert - -print "\\"width\\": %w, \\"height\\": %h, " /dev/null`);
+        $r->print("\"uri\": \"/iabr/${rel_file}?page=$uri_file\"}");
+        if($line_count < $page_count){
+          $r->print(",\n");
+        }else{
+          $r->print("\n");
+        }
+      }
+      $r->print("            ]\n         ],\n");
+      $r->print("   \"bookTitle\": \"BookShelf\",\n");
+      $r->print("   \"bookUrl\": \"/\",\n");
+      $r->print("   \"ui\": \"full\",\n");
+      $r->print("   \"el\": \"#BookReader\"\n");
+      $r->print("}");
+      close($index_fh);
+      return OK;
     }elsif($page eq "html"){  # return the html that calls the json
       open(my $in_fh, '<', "/var/cache/git/bookreader/_index.html") or die "Cannot open /var/cache/git/bookreader/_index.html for reading: $!";
       my $content = do { local $/; <$in_fh> };
@@ -101,6 +94,15 @@ sub cbr_handler {
       $r->send_http_header("text/javascript");
       $r->print($content);
     }else{                    # it's a single page, return an image
+      ####################
+      ### Page Handler ###
+      ####################
+      my $outer_file=quotemeta(uri_unescape($rar_file));
+      my $inner_file=quotemeta(uri_unescape($page));
+
+      $r->send_http_header("image/jpg");
+      binmode STDOUT;
+      $r->print(`/usr/bin/unrar p -inul ${outer_file} ${inner_file}`);
       ####################
       ### Page Handler ###
       ####################
