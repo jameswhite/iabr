@@ -100,7 +100,15 @@ sub cbr_handler {
       my $outer_file=quotemeta(uri_unescape($rar_file));
       my $inner_file=quotemeta(uri_unescape($page));
 
-      $r->send_http_header("image/jpg");
+      # need file type detection here
+      my $mime_type=`/usr/bin/unrar p -inul ${outer_file} ${inner_file} | /usr/bin/file --mime-type - | /usr/bin/awk '{print \$NF}'`;
+      chomp($mime_type);
+      if("$mime_type" eq "image/jpeg"){
+        $r->send_http_header("image/jpg");
+      }else{
+        $r->log_error(0,"\nmime type -=[ " . $mime_type . " ]=-\n");
+        $r->send_http_header("$mime_type");
+      }
       binmode STDOUT;
       $r->print(`/usr/bin/unrar p -inul ${outer_file} ${inner_file}`);
       ####################
