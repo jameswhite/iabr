@@ -125,18 +125,52 @@ sub cbz_handler {
 
     # Define the input PDF file and the output PNG file
     my $book_dir = '/var/www/html/books';
-    my $pdf_file = "${book_dir}/Life_Cycle_of_a_Silver_Bullet.pdf"; # should be a .cbz
+    my $zip_file = "${book_dir}/Life_Cycle_of_a_Silver_Bullet.pdf"; # should be a .cbz
 
-    $r->send_http_header("text/html");
-    $r->print("Zip file processing...");
-    return OK;
 
     if($r->filename=~/\/iabr\/(.*)/){
       $rel_file = "$1";
-      $pdf_file = "${book_dir}/${rel_file}";
+      $zip_file = "${book_dir}/${rel_file}";
     }
 
     if($page eq "json"){      # return the json index
+      #####################
+      ### Index Handler ###
+      #####################
+      my $page_count=0;
+      open(my $counter_fh, '-|', "unzip -l". quotemeta(uri_unescape($zip_file)). " | /usr/bin/grep \"[[:digit:]]\{4\}-[[:digit:]]\{2\}-[[:digit:]]\{2\}[[:space:]][[:digit:]]\{2\}:[[:digit:]]\{2\}\" | /usr/bin/awk '{if(\$1 != \"0\"){print \$0}}'  | /usr/bin/sed -e 's/^[[:space:]]*[[:digit:]]*[[:space:]]*[[:digit:]]\{4\}-[[:digit:]]\{2\}-[[:digit:]]\{2\}[[:space:]][[:digit:]]\{2\}:[[:digit:]]\{2\}[[:space:]]*//' 2>/dev/null") or die "Cannot open index process: $!";
+      while (my $line=<$counter_fh>){
+        $r->log_error(0, "$line\n");
+        $page_count++;
+      }
+      close($counter_fh);
+      my $line_count=0;
+      $r->send_http_header("application/json");
+      $r->print("{\n  \"ppi\": 200,\n  \"data\": [\n            [\n");
+      open(my $index_fh, '-|', "unzip -l". quotemeta(uri_unescape($zip_file)). " | /usr/bin/grep \"[[:digit:]]\{4\}-[[:digit:]]\{2\}-[[:digit:]]\{2\}[[:space:]][[:digit:]]\{2\}:[[:digit:]]\{2\}\" | /usr/bin/awk '{if(\$1 != \"0\"){print \$0}}'  | /usr/bin/sed -e 's/^[[:space:]]*[[:digit:]]*[[:space:]]*[[:digit:]]\{4\}-[[:digit:]]\{2\}-[[:digit:]]\{2\}[[:space:]][[:digit:]]\{2\}:[[:digit:]]\{2\}[[:space:]]*//' 2>/dev/null") or die "Cannot open index process: $!";
+      while (my $raw_file=<$index_fh>){
+        chomp($raw_file);
+        $inner_file=quotemeta($raw_file);
+        $uri_file=uri_escape($raw_file);
+        my $outer_file=quotemeta(uri_unescape($zip_file));
+        $line_count++;
+        $r->print("              {");
+        $r->print(`/usr/bin/unzip -p ${outer_file} ${inner_file}  | /usr/bin/convert - -print "\\"width\\": %w, \\"height\\": %h, " /dev/null`);
+        $r->print("\"uri\": \"/iabr/${rel_file}?page=$uri_file\"}");
+        if($line_count < $page_count){
+          $r->print(",\n");
+        }else{
+          $r->print("\n");
+        }
+      }
+      $r->print("            ]\n         ],\n");
+      $r->print("   \"bookTitle\": \"BookShelf\",\n");
+      $r->print("   \"bookUrl\": \"/\",\n");
+      $r->print("   \"ui\": \"full\",\n");
+      $r->print("   \"el\": \"#BookReader\"\n");
+      $r->print("}");
+      close($index_fh);
+      return OK;
       #####################
       ### Index Handler ###
       #####################
@@ -162,6 +196,9 @@ sub cbz_handler {
       ####################
       ### Page Handler ###
       ####################
+      $r->send_http_header("text/html");
+      $r->print("Zip file processing...");
+      return OK;
     }
    return OK;
 }
