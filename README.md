@@ -15,6 +15,7 @@ docker run -i -p8000:8000 -v $(pwd)/books:/var/www/html/books -t iabr /bin/bash 
   - browse to http://127.0.0.1:8000/books
 
 ### Notes on security and implementation
+  - Creating the indexes is slow and can take tens of seconds to first load a book, loading individual pages is much faster after that.
   - This code is not DRY, and is not path safe, so don't host it anywhere outside of a Docker container unless you want it to leak files
   - This code code is meant to be a proof-of-concept, and perl was just the fastest way for me to prove said concept.
   - There's a lot more wrong with this code than right.
