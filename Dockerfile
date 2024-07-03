@@ -1,47 +1,3 @@
-#!/usr/bin/env bash
-
-urldecode() {
-    # urldecode <string>
-
-    local url_encoded="${1//+/ }"
-    printf '%b' "${url_encoded//%/\\x}"
-}
-export -f urldecode
-
-HERE="$(cd $(dirname ${BASH_SOURCE[0]})/.. ; pwd)"
-[ -d ${HERE}/tmp ] && TEMP="${HERE}/tmp" || TEMP="/tmp"
-TEMPDIR=$(mktemp -d ${TEMP}/$(basename ${BASH_SOURCE[0]}).XXXX)
-
-cleanup() {
-  [ -d "${TEMPDIR}" ] && rm -rf "${TEMPDIR}"
-}
-trap cleanup EXIT
-
-FILE_URI="https://raw.githubusercontent.com/jameswhite/iabr/main/doc/Life_Cycle_of_a_Silver_Bullet.pdf"
-while [ ! -z "$*" ];do
-  case "$1" in
-     "--uri"|"--url")
-     FILE_URI="$2"
-     shift 2;
-     ;;
-     *)
-       echo "Unknown Option $1"
-       shift 1
-     ;;
-  esac
-done
-FILE_BASE="$(echo "${FILE_URI}" | sed 's/.*\///' )"
-DECODED_FILE_BASE="$(urldecode "${FILE_BASE}")"
-# Clean up any old image
-docker image list | grep iabr | awk '{print $3}' | grep -v IMAGE | xargs docker image rm -f
-
-# Get our root filesystem:
-HERE="$(cd $(dirname ${BASH_SOURCE[0]}); pwd)"
-# Get our root filesystem if we don't have one):
-[ -f ${HERE}/rootfs.tar.xz ] || curl "https://raw.githubusercontent.com/jameswhite/rootfs/main/$(curl https://raw.githubusercontent.com/jameswhite/rootfs/main/rootfs.tar.xz)" > rootfs.tar.xz
-# ensure COPY will work from script dir
-cd ${HERE}
-cat << EOF | docker build --no-cache --progress=plain -t iabr -f - "${HERE}"
 FROM scratch
 ADD rootfs.tar.xz /
 ADD config/etc/apt/sources.list /etc/apt/sources.list
@@ -73,7 +29,3 @@ RUN [ -f /etc/apt/sources.list.d/debian.sources ] && rm /etc/apt/sources.list.d/
 COPY config/ /
 CMD ["bash"]
 EXPOSE 8000
-EOF
-
-# run our container, map port 8000 back to it, mount ./books under the www root, start nginx and run bash
-docker run -i -p8000:8000 --expose=8000 -v $(pwd)/books:/var/www/html/books -t iabr /bin/bash -c "/usr/sbin/service nginx start && /bin/bash"
