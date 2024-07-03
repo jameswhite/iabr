@@ -12,11 +12,11 @@ sub handler {
     my $r = shift;
     return OK if $r->header_only;
 
-    if ($r->filename =~ /\.pdf$/){
+    if ($r->filename =~ /\.pdf$/i){
       $r->iabr::pdf_handler;
-    }elsif ($r->filename =~ /\.cbr$/){
+    }elsif ($r->filename =~ /\.cbr$/i){
       $r->iabr::cbr_handler;
-    }elsif ($r->filename =~ /\.cbz$/){
+    }elsif ($r->filename =~ /\.cbz$/i){
       $r->iabr::cbz_handler;
     }else{
       $r->send_http_header("text/html");
