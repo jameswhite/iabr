@@ -121,7 +121,7 @@ sub cbr_handler {
 sub cbz_handler {
     my $r = shift;
     my $page="0";
-    if($r->args =~ /page=(html|idx|json|js|\d+)$/){ $page=$1; }
+    if($r->args =~ /page=(html|idx|json|js|\d+)$/){ $page=$1; }else{ $page=$r->args; $page=~s/^page=//;}
 
     # Define the input PDF file and the output PNG file
     my $book_dir = '/var/www/html/books';
@@ -138,18 +138,27 @@ sub cbz_handler {
       ### Index Handler ###
       #####################
       my $page_count=0;
-      open(my $counter_fh, '-|', "unzip -l". quotemeta(uri_unescape($zip_file)). " | /usr/bin/cat - | /usr/bin/grep \"[[:digit:]]\{4\}-[[:digit:]]\{2\}-[[:digit:]]\{2\}[[:space:]][[:digit:]]\{2\}:[[:digit:]]\{2\}\" | /usr/bin/awk '{if(\$1 != \"0\"){print \$0}}'  | /usr/bin/sed -e 's/^[[:space:]]*[[:digit:]]*[[:space:]]*[[:digit:]]\{4\}-[[:digit:]]\{2\}-[[:digit:]]\{2\}[[:space:]][[:digit:]]\{2\}:[[:digit:]]\{2\}[[:space:]]*//' 2>/dev/null") or die "Cannot open index process: $!";
+      open(my $counter_fh, '-|', "/usr/bin/unzip -jl ". quotemeta(uri_unescape($zip_file))); 
+      $counter_fh->autoflush(1);
       while (my $line=<$counter_fh>){
-        $r->log_error(0, "$line\n");
+	chomp($line);
+        next unless($line =~/\s+(\d+)\s+\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}/);
+        next if($1==0);
+        next if($line=~/[Tt][Xx][Tt]$/);
+        $line =~s/\s+(\d+)\s+\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}\s+//;
         $page_count++;
       }
       close($counter_fh);
       my $line_count=0;
       $r->send_http_header("application/json");
       $r->print("{\n  \"ppi\": 200,\n  \"data\": [\n            [\n");
-      open(my $index_fh, '-|', "unzip -l". quotemeta(uri_unescape($zip_file)). " | /usr/bin/cat - | /usr/bin/grep \"[[:digit:]]\{4\}-[[:digit:]]\{2\}-[[:digit:]]\{2\}[[:space:]][[:digit:]]\{2\}:[[:digit:]]\{2\}\" | /usr/bin/awk '{if(\$1 != \"0\"){print \$0}}'  | /usr/bin/sed -e 's/^[[:space:]]*[[:digit:]]*[[:space:]]*[[:digit:]]\{4\}-[[:digit:]]\{2\}-[[:digit:]]\{2\}[[:space:]][[:digit:]]\{2\}:[[:digit:]]\{2\}[[:space:]]*//' 2>/dev/null") or die "Cannot open index process: $!";
+      open(my $index_fh, '-|', "/usr/bin/unzip -jl ". quotemeta(uri_unescape($zip_file)));
       while (my $raw_file=<$index_fh>){
         chomp($raw_file);
+        next unless($raw_file =~/\s+(\d+)\s+\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}/);
+        next if($1==0);
+        next if($raw_file=~/[Tt][Xx][Tt]$/);
+        $raw_file =~s/\s+(\d+)\s+\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}\s+//;
         $inner_file=quotemeta($raw_file);
         $uri_file=uri_escape($raw_file);
         my $outer_file=quotemeta(uri_unescape($zip_file));
@@ -196,9 +205,20 @@ sub cbz_handler {
       ####################
       ### Page Handler ###
       ####################
-      $r->send_http_header("text/html");
-      $r->print("Zip file processing...");
-      return OK;
+      my $outer_file=quotemeta(uri_unescape($zip_file));
+      my $inner_file=quotemeta(uri_unescape($page));
+
+      # need file type detection here
+      my $mime_type=`/usr/bin/unzip -p ${outer_file} ${inner_file} | /usr/bin/file --mime-type - | /usr/bin/awk '{print \$NF}'`;
+      chomp($mime_type);
+      if("$mime_type" eq "image/jpeg"){
+        $r->send_http_header("image/jpg");
+      }else{
+        $r->send_http_header("image/jpg");
+        #$r->send_http_header("$mime_type");
+      }
+      binmode STDOUT;
+      $r->print(`/usr/bin/unzip -p ${outer_file} ${inner_file}`);
     }
    return OK;
 }
