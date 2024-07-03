@@ -214,8 +214,8 @@ sub cbz_handler {
       if("$mime_type" eq "image/jpeg"){
         $r->send_http_header("image/jpg");
       }else{
-        $r->send_http_header("image/jpg");
-        #$r->send_http_header("$mime_type");
+        $r->log_error(0,"$mime_type");
+        $r->send_http_header("$mime_type");
       }
       binmode STDOUT;
       $r->print(`/usr/bin/unzip -p ${outer_file} ${inner_file}`);
