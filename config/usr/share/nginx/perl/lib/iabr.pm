@@ -138,7 +138,7 @@ sub cbz_handler {
       ### Index Handler ###
       #####################
       my $page_count=0;
-      open(my $counter_fh, '-|', "unzip -l". quotemeta(uri_unescape($zip_file)). " | /usr/bin/grep \"[[:digit:]]\{4\}-[[:digit:]]\{2\}-[[:digit:]]\{2\}[[:space:]][[:digit:]]\{2\}:[[:digit:]]\{2\}\" | /usr/bin/awk '{if(\$1 != \"0\"){print \$0}}'  | /usr/bin/sed -e 's/^[[:space:]]*[[:digit:]]*[[:space:]]*[[:digit:]]\{4\}-[[:digit:]]\{2\}-[[:digit:]]\{2\}[[:space:]][[:digit:]]\{2\}:[[:digit:]]\{2\}[[:space:]]*//' 2>/dev/null") or die "Cannot open index process: $!";
+      open(my $counter_fh, '-|', "unzip -l". quotemeta(uri_unescape($zip_file)). " | /usr/bin/cat - | /usr/bin/grep \"[[:digit:]]\{4\}-[[:digit:]]\{2\}-[[:digit:]]\{2\}[[:space:]][[:digit:]]\{2\}:[[:digit:]]\{2\}\" | /usr/bin/awk '{if(\$1 != \"0\"){print \$0}}'  | /usr/bin/sed -e 's/^[[:space:]]*[[:digit:]]*[[:space:]]*[[:digit:]]\{4\}-[[:digit:]]\{2\}-[[:digit:]]\{2\}[[:space:]][[:digit:]]\{2\}:[[:digit:]]\{2\}[[:space:]]*//' 2>/dev/null") or die "Cannot open index process: $!";
       while (my $line=<$counter_fh>){
         $r->log_error(0, "$line\n");
         $page_count++;
@@ -147,7 +147,7 @@ sub cbz_handler {
       my $line_count=0;
       $r->send_http_header("application/json");
       $r->print("{\n  \"ppi\": 200,\n  \"data\": [\n            [\n");
-      open(my $index_fh, '-|', "unzip -l". quotemeta(uri_unescape($zip_file)). " | /usr/bin/grep \"[[:digit:]]\{4\}-[[:digit:]]\{2\}-[[:digit:]]\{2\}[[:space:]][[:digit:]]\{2\}:[[:digit:]]\{2\}\" | /usr/bin/awk '{if(\$1 != \"0\"){print \$0}}'  | /usr/bin/sed -e 's/^[[:space:]]*[[:digit:]]*[[:space:]]*[[:digit:]]\{4\}-[[:digit:]]\{2\}-[[:digit:]]\{2\}[[:space:]][[:digit:]]\{2\}:[[:digit:]]\{2\}[[:space:]]*//' 2>/dev/null") or die "Cannot open index process: $!";
+      open(my $index_fh, '-|', "unzip -l". quotemeta(uri_unescape($zip_file)). " | /usr/bin/cat - | /usr/bin/grep \"[[:digit:]]\{4\}-[[:digit:]]\{2\}-[[:digit:]]\{2\}[[:space:]][[:digit:]]\{2\}:[[:digit:]]\{2\}\" | /usr/bin/awk '{if(\$1 != \"0\"){print \$0}}'  | /usr/bin/sed -e 's/^[[:space:]]*[[:digit:]]*[[:space:]]*[[:digit:]]\{4\}-[[:digit:]]\{2\}-[[:digit:]]\{2\}[[:space:]][[:digit:]]\{2\}:[[:digit:]]\{2\}[[:space:]]*//' 2>/dev/null") or die "Cannot open index process: $!";
       while (my $raw_file=<$index_fh>){
         chomp($raw_file);
         $inner_file=quotemeta($raw_file);
