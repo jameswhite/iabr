@@ -172,13 +172,13 @@ sub cbz_handler {
           $r->print("\n");
         }
       }
+      close($index_fh);
       $r->print("            ]\n         ],\n");
       $r->print("   \"bookTitle\": \"BookShelf\",\n");
       $r->print("   \"bookUrl\": \"/\",\n");
       $r->print("   \"ui\": \"full\",\n");
       $r->print("   \"el\": \"#BookReader\"\n");
       $r->print("}");
-      close($index_fh);
       return OK;
       #####################
       ### Index Handler ###
@@ -243,16 +243,30 @@ sub pdf_handler {
       my $page_count = $pdf->numPages();
       $r->send_http_header("application/json");
       $r->print("{\n  \"ppi\": 200,\n  \"data\": [\n            [\n");
+      # convert -density 200 Life_Cycle_of_a_Silver_Bullet.pdf[0] png:- | file - | sed -r 's/.*[[:space:]]([[:digit:]]+[[:space:]]x[[:space:]][[:digit:]]+).*/\1/'
       for my $page_number (0 .. $page_count-1) {
-          my $current_page=$page_number;
-	  my $img_uri=uri_encode("/iabr/${rel_file}?page=${current_page}");
-	  $img_uri=~s/#/%23/g;
-          $r->print("              {\"width\": 1275, \"height\": 1650, \"uri\": \"$img_uri\"}");
+        my $current_page=$page_number;
+	my $img_uri=uri_encode("/iabr/${rel_file}?page=${current_page}");
+	$img_uri=~s/#/%23/g;
+        open(my $index_fh, '-|', "/usr/bin/convert -density 200 ". quotemeta(uri_unescape($pdf_file)) . " png:- | file - ");
+        while (my $raw_file=<$index_fh>){
+          chomp($raw_file);
+          my $width = 1275;
+          my $height = 1650;
+          if ($raw_file =~ /(\d+)\s*x\s*(\d+)/) {
+            $width=$1;
+            $height=$2;
+          }else{
+            $r->log_error(0,$raw_file);
+          }
+          $r->print("             {\"width\": ${width}, \"height\": ${height}, \"uri\": \"$img_uri\"}");
           if($current_page < $page_count - 1){
             $r->print(",\n");
           }else{
             $r->print("\n");
           }
+        }
+        close($index_fh);
       }
       $r->print("            ]\n         ],\n");
       $r->print("   \"bookTitle\": \"BookShelf\",\n");
