@@ -243,12 +243,12 @@ sub pdf_handler {
       my $page_count = $pdf->numPages();
       $r->send_http_header("application/json");
       $r->print("{\n  \"ppi\": 200,\n  \"data\": [\n            [\n");
-      # convert -density 200 Life_Cycle_of_a_Silver_Bullet.pdf[0] png:- | file - | sed -r 's/.*[[:space:]]([[:digit:]]+[[:space:]]x[[:space:]][[:digit:]]+).*/\1/'
+      # convert -density 200 -colorspace RGB Life_Cycle_of_a_Silver_Bullet.pdf[0] png:- | file - | sed -r 's/.*[[:space:]]([[:digit:]]+[[:space:]]x[[:space:]][[:digit:]]+).*/\1/'
       for my $page_number (0 .. $page_count-1) {
         my $current_page=$page_number;
 	my $img_uri=uri_encode("/iabr/${rel_file}?page=${current_page}");
 	$img_uri=~s/#/%23/g;
-        open(my $index_fh, '-|', "/usr/bin/convert -density 200 ". quotemeta(uri_unescape($pdf_file)) . " png:- | file - ");
+        open(my $index_fh, '-|', "/usr/bin/convert -density 200 -colorspace RGB ". quotemeta(uri_unescape($pdf_file)) . "[$page_number] png:- | file - ");
         while (my $raw_file=<$index_fh>){
           chomp($raw_file);
           my $width = 1275;
@@ -295,7 +295,7 @@ sub pdf_handler {
     }else{
     # Read the specific page from the PDF file
     # The native perlmagick stuff doesn't seem to be able to upscale, so using the shell
-    open(my $convert_fh, '-|', "convert -density 200 ". quotemeta(uri_unescape($pdf_file)) ."\[$page\] png:- 2>/dev/null") 
+    open(my $convert_fh, '-|', "convert -density 200 -colorspace RGB ". quotemeta(uri_unescape($pdf_file)) ."\[$page\] png:- 2>/dev/null") 
       or die "Cannot open convert process: $!";
     $convert_fh->autoflush(1);
     $r->send_http_header("image/png");

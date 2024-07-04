@@ -4,7 +4,7 @@
   - Download a debian bookwork rootfs.tar.xz from your favorite Docker image source:
   - Here's mine:
 ```
-[ -f ${HERE}/rootfs.tar.xz ] || curl "https://raw.githubusercontent.com/jameswhite/rootfs/main/$(curl https://raw.githubusercontent.com/jameswhite/rootfs/main/rootfs.tar.xz)" > rootfs.tar.xz
+[ ! -f rootfs.tar.xz ] && curl "https://raw.githubusercontent.com/jameswhite/rootfs/main/$(curl https://raw.githubusercontent.com/jameswhite/rootfs/main/rootfs.tar.xz)" > rootfs.tar.xz
 ```
   - build and run the docker image:
 ```
