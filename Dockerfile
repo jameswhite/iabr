@@ -24,6 +24,7 @@ RUN [ -f /etc/apt/sources.list.d/debian.sources ] && rm /etc/apt/sources.list.d/
  && mv /var/cache/git/bookreader/index.html /var/cache/git/bookreader/demo.html  \
  && mv /etc/ImageMagick-6-policy.xml /etc/ImageMagick-6/policy.xml || true       \
  && rm /var/www/html/index.nginx-debian.html                                     \
+ && /usr/bin/chown -R www-data:www-data /var/www/html/books                      \
  && cp /etc/bookreader/BookReader/images/loading.gif /var/www/html/BookReader/images/loading.gif \
  && /usr/local/bin/book --uri "${FILE_URI}" || true
 COPY config/ /
