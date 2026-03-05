@@ -14,7 +14,7 @@ RUN [ -f /etc/apt/sources.list.d/debian.sources ] && rm /etc/apt/sources.list.d/
  && mkdir -p /var/cache/git                                                      \
  && mkdir -p /var/www/html/books                                                 \
  && mkdir -p /usr/share/nginx/perl/lib                                           \
- && (cd /var/cache/git; git clone https://github.com/internetarchive/bookreader) \
+ && (cd /var/cache/git; git clone https://github.com/jameswhite/bookreader) \
  && (cd /var/cache/git/bookreader; git checkout -b laboratory)                   \
  && ( cd /var/cache/git/bookreader                                               \
       yes 'y' | npx update-browserslist-db@latest                                \
